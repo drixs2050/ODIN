@@ -253,22 +253,24 @@ def insertTableQuery(json):
 		for column_name in obj:
 			if (type(obj[column_name]) != type({})):
 				if (column_name not in columnNotDict):
-					columnNotDict.append(column_name)
-			valueNotDict.append(obj[column_name])
+					columnNotDict.append(column_name.encode('ascii'))
+				valueNotDict.append(obj[column_name].encode('ascii'))
 		for column_name in obj:
 			if (type(obj[column_name]) == type({})):
 				columnDict = ['stemname', 'numstems']
 				for stem in obj[column_name]:
 					combinedValue = valueNotDict[:]
-					combinedValue.append(stem)
+					combinedValue.append(stem.encode('ascii'))
 					combinedValue.append(obj[column_name][stem])
+
 					value = value + str(tuple(combinedValue)) + ', '
-	columnNotDict +=columnDict 
+	columnNotDict +=columnDict
 	column = str(tuple(columnNotDict))
+	column = column.replace("'", "")
 	value = value.strip(", ")
 	table_name = json[0]["name"]
 	insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
-	print(type(value))
+	
 	return insert_query
 
 def updateTableQuery(table_name, attr_dict, condition = None):
