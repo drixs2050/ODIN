@@ -1,0 +1,201 @@
+{                                          +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-06",              +
+      "run_time": "0:02:34.150736",          +
+      "service_environment": "PROD",         +
+      "service_title": "UTORGrouper221",     +
+      "service_version": "2.2.1",            +
+      "stem_counts": {                       +
+          "acad": 303,                       +
+          "access": 6,                       +
+          "apps": 1103,                      +
+          "basis": 3698,                     +
+          "etc": 14,                         +
+          "lists": 3,                        +
+          "reference": 11,                   +
+          "test": 28,                        +
+          "utorable": 16827,                 +
+          "x-total": 21993                   +
+      }                                      +
+  }                                          +
+
+ {                                           +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-07",              +
+      "run_time": "0:02:31.501566",          +
+      "service_environment": "PROD",         +
+      "service_title": "UTORGrouper221",     +
+      "service_version": "2.2.1",            +
+      "stem_counts": {                       +
+          "acad": 303,                       +
+          "access": 6,                       +
+          "apps": 1103,                      +
+          "basis": 3698,                     +
+          "etc": 14,                         +
+          "lists": 3,                        +
+          "reference": 11,                   +
+          "test": 28,                        +
+          "utorable": 16830,                 +
+          "x-total": 21996                   +
+      }                                      +
+  }
+  {                                          +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-08",              +
+      "run_time": "0:02:31.898743",          +
+      "service_environment": "PROD",         +
+      "service_title": "UTORGrouper221",     +
+      "service_version": "2.2.1",            +
+      "stem_counts": {                       +
+          "acad": 303,                       +
+          "access": 6,                       +
+          "apps": 1103,                      +
+          "basis": 3698,                     +
+          "etc": 14,                         +
+          "lists": 3,                        +
+          "reference": 11,                   +
+          "test": 28,                        +
+          "utorable": 16830,                 +
+          "x-total": 21996                   +
+      }                                      +
+  }
+  {                                          +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-09",              +
+      "run_time": "0:02:30.942723",          +
+      "service_environment": "PROD",         +
+      "service_title": "UTORGrouper221",     +
+      "service_version": "2.2.1",            +
+      "stem_counts": {                       +
+          "acad": 303,                       +
+          "access": 6,                       +
+          "apps": 1103,                      +
+          "basis": 3698,                     +
+          "etc": 14,                         +
+          "lists": 3,                        +
+          "reference": 11,                   +
+          "test": 28,                        +
+          "utorable": 16839,                 +
+          "x-total": 22005                   +
+      }                                      +
+  }
+  {                                          +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-08",              +
+      "run_time": "0:00:00.061553",          +
+      "service_environment": "EASI",         +
+      "service_title": "UTORGrouperEASI230", +
+      "service_version": "2.3.0",            +
+      "stem_counts": {                       +
+          "acad": 136,                       +
+          "apps": 4,                         +
+          "etc": 4,                          +
+          "utorable": 215,                   +
+          "x-total": 359                     +
+      }                                      +
+  }
+ {                                           +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-09",              +
+      "run_time": "0:00:00.059618",          +
+      "service_environment": "EASI",         +
+      "service_title": "UTORGrouperEASI230", +
+      "service_version": "2.3.0",            +
+      "stem_counts": {                       +
+          "acad": 136,                       +
+          "apps": 4,                         +
+          "etc": 4,                          +
+          "utorable": 215,                   +
+          "x-total": 359                     +
+      }                                      +
+  }
+ {                                           +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-06",              +
+      "run_time": "0:01:17.659550",          +
+      "service_environment": "DEV",          +
+      "service_title": "UTORGrouper240",     +
+      "service_version": "2.4.0",            +
+      "stem_counts": {                       +
+          "acad": 303,                       +
+          "access": 5,                       +
+          "apps": 1091,                      +
+          "basis": 3630,                     +
+          "etc": 13,                         +
+          "lists": 3,                        +
+          "reference": 11,                   +
+          "test": 29,                        +
+          "utoraad": 19,                     +
+          "utorable": 16388,                 +
+          "utoread": 23,                     +
+          "x-total": 21515                   +
+      }                                      +
+  }
+ {                                           +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-07",              +
+      "run_time": "0:01:18.933696",          +
+      "service_environment": "DEV",          +
+      "service_title": "UTORGrouper240",     +
+      "service_version": "2.4.0",            +
+      "stem_counts": {                       +
+          "acad": 303,                       +
+          "access": 5,                       +
+          "apps": 1091,                      +
+          "basis": 3630,                     +
+          "etc": 13,                         +
+          "lists": 3,                        +
+          "reference": 11,                   +
+          "test": 29,                        +
+          "utoraad": 19,                     +
+          "utorable": 16388,                 +
+          "utoread": 23,                     +
+          "x-total": 21515                   +
+      }                                      +
+  }
+ {                                           +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-08",              +
+      "run_time": "0:01:19.196093",          +
+      "service_environment": "DEV",          +
+      "service_title": "UTORGrouper240",     +
+      "service_version": "2.4.0",            +
+      "stem_counts": {                       +
+          "acad": 303,                       +
+          "access": 5,                       +
+          "apps": 1091,                      +
+          "basis": 3630,                     +
+          "etc": 13,                         +
+          "lists": 3,                        +
+          "reference": 11,                   +
+          "test": 29,                        +
+          "utoraad": 19,                     +
+          "utorable": 16388,                 +
+          "utoread": 23,                     +
+          "x-total": 21515                   +
+      }                                      +
+  }
+ {                                           +
+      "name": "Grouper",                     +
+      "run_date": "2019-12-09",              +
+      "run_time": "0:01:19.840661",          +
+      "service_environment": "DEV",          +
+      "service_title": "UTORGrouper240",     +
+      "service_version": "2.4.0",            +
+      "stem_counts": {                       +
+          "acad": 303,                       +
+          "access": 5,                       +
+          "apps": 1091,                      +
+          "basis": 3630,                     +
+          "etc": 13,                         +
+          "lists": 3,                        +
+          "reference": 11,                   +
+          "test": 29,                        +
+          "utoraad": 19,                     +
+          "utorable": 16388,                 +
+          "utoread": 23,                     +
+          "x-total": 21515                   +
+      }                                      +
+  }
+
+
