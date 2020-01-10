@@ -65,7 +65,7 @@ def main (file_name):
 	elif(query_type == "insert"):
 		print("You have entered: {}".format(query_type))
 		#Should implement where it shows all the table_name in the database. Use select for this and show.
-		print(insertTable(data))
+		insertTableQuery(data)
 		
 			
 		
