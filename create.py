@@ -1,4 +1,5 @@
 import psycopg2
+import mysql.connector
 from datetime import date
 
 def getConnection():
@@ -6,6 +7,21 @@ def getConnection():
     new_conn = psycopg2.connect(user = 'parktae7', database = 'odin')
 
     return new_conn
+
+def getSQLConnection(username, pass_word):
+	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'shibboleth')
+	return new_conn
+
+def selectSQLQuery(username, pass_word):
+	conn = getSQLConnection(username, pass_word)
+	cursor = conn.cursor()
+	cursor.execute("Describe splist")
+	#cursor.execute("SELECT * FROM splist")
+	print("\nService Provider Attributes:")
+	for row in cursor.fetchall():
+		print row[0]
+	conn.close()
+
 
 def commitQuery(query, output):
 	"""
@@ -246,34 +262,29 @@ def insertTableQuery(json):
 	This is a helper function that returns the INSERT TABLE statement
 	"""
 	columnNotDict = []
-	completeValueNotDict = ""
-	valueDict = ""
-	columnDict = ""
+	value=""
+	column = ""
 	for obj in json:
-		valueNotDict = ""
+		valueNotDict = []
 		for column_name in obj:
 			if (type(obj[column_name]) != type({})):
-				columnNotDict.append(column_name)
-				valueNotDict = valueNotDict + """'""" +  obj[column_name] + """', """
-			elif (type(obj[column_name]) == type({})):
-				columnDict = "stemname, numstems"
+				if (column_name not in columnNotDict):
+					columnNotDict.append(column_name)
+			valueNotDict.append(obj[column_name])
+		for column_name in obj:
+			if (type(obj[column_name]) == type({})):
+				columnDict = ['stemname', 'numstems']
 				for stem in obj[column_name]:
-					statement = """, '""" + stem + """', """ + str(obj[column_name][stem])
-					valueNotDict = valueNotDict.strip(", ")
-					completeValueNotDict = completeValueNotDict + "(" + valueNotDict +  statement + "), "
-			if (column_name == list(obj.keys())[-1]):
-				if (columnDict == ""):
-					valueNotDict = valueNotDict.strip(", ")
-					completeValueNotDict = completeValueNotDict + "(" + valueNotDict + "), "
-	completeValueNotDict = completeValueNotDict.strip(", ")
-	columnNotDict = list(dict.fromkeys(columnNotDict))
+					combinedValue = valueNotDict[:]
+					combinedValue.append(stem)
+					combinedValue.append(obj[column_name][stem])
+					value = value + str(tuple(combinedValue)) + ', '
+	columnNotDict +=columnDict 
+	column = str(tuple(columnNotDict))
+	value = value.strip(", ")
 	table_name = json[0]["name"]
-	columnDictStr = ", ".join(columnNotDict)
-	if (columnDict == ''):
-		column_statement = columnDictStr
-	else:
-		column_statement = columnDictStr + ', ' + columnDict
-	insert_query = "INSERT INTO {} ({}) VALUES {};".format(table_name,column_statement, completeValueNotDict)
+	insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
+	print(type(value))
 	return insert_query
 
 def updateTableQuery(table_name, attr_dict, condition = None):
@@ -303,6 +314,5 @@ def alterTableQuery(table_name, attr_dict):
 	value_statement = value_str.strip(", ")
 	alter_query = "ALTER TABLE {} ADD {} {};".format(table_name,key_statement, value_statement)
 	return alter_query
-
 
 
