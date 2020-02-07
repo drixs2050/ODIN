@@ -1,11 +1,26 @@
 import psycopg2
 from datetime import date
+import mysql.connector
 
 def getConnection():
 
     new_conn = psycopg2.connect(user = 'parktae7', database = 'odin')
 
     return new_conn
+
+def getSQLConnection(username, pass_word):
+	new_conn = mysql.connector.connect(user=username,password=pass_word, database = 'shibboleth')
+	return new_conn
+
+def selectSQLQuery(username, pass_word):
+	conn = getSQLConnection(username, pass_word)
+	cursor = conn.cursor()
+	cursor.execute("Describe splist")
+	#cursor.execute("SELECT * FROM splist")
+	print("\nService Provider Attributes:")
+	for row in cursor.fetchall():
+		print row[0]
+	conn.close()
 
 def commitQuery(query, output):
 	"""

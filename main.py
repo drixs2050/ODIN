@@ -1,6 +1,6 @@
 import json
 from create import *
-import ast
+import getpass
 
 def main (file_name):
 	try:
@@ -65,7 +65,12 @@ def main (file_name):
 	elif(query_type == "insert"):
 		print("You have entered: {}".format(query_type))
 		#Should implement where it shows all the table_name in the database. Use select for this and show.
-		insertTable(data)
+		insertTableQuery(data)
+	elif(query_type == "select"):
+		username = raw_input("Type in your username: ")
+		pa = getpass.getpass()
+		selectSQLQuery(username,pa)
+		
 		
 			
 		
