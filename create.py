@@ -1,5 +1,5 @@
-
 import psycopg2
+import mysql.connector
 from datetime import date
 
 def getConnection():
@@ -8,6 +8,19 @@ def getConnection():
 
     return new_conn
 
+def getSQLConnection(username, pass_word):
+	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'shibboleth')
+	return new_conn
+
+def selectSQLQuery(username, pass_word):
+	conn = getSQLConnection(username, pass_word)
+	cursor = conn.cursor()
+	cursor.execute("Describe splist")
+	#cursor.execute("SELECT * FROM splist")
+	print("\nService Provider Attributes:")
+	for row in cursor.fetchall():
+		print row[0]
+	conn.close()
 
 
 def commitQuery(query, output):
@@ -256,13 +269,19 @@ def insertTableQuery(json):
 		for column_name in obj:
 			if (type(obj[column_name]) != type({})):
 				if (column_name not in columnNotDict):
+<<<<<<< HEAD
 					columnNotDict.append(column_name)
 			valueNotDict.append(obj[column_name])
+=======
+					columnNotDict.append(column_name.encode('ascii'))
+				valueNotDict.append(obj[column_name].encode('ascii'))
+>>>>>>> b0ce0ea6b1dfc0d3ed2b19397d55b974537d60f3
 		for column_name in obj:
 			if (type(obj[column_name]) == type({})):
 				columnDict = ['stemname', 'numstems']
 				for stem in obj[column_name]:
 					combinedValue = valueNotDict[:]
+<<<<<<< HEAD
 					combinedValue.append(stem)
 					combinedValue.append(obj[column_name][stem])
 					value = value + str(tuple(combinedValue)) + ', '
@@ -272,6 +291,19 @@ def insertTableQuery(json):
 	table_name = json[0]["name"]
 	insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
 	print(type(value))
+=======
+					combinedValue.append(stem.encode('ascii'))
+					combinedValue.append(obj[column_name][stem])
+
+					value = value + str(tuple(combinedValue)) + ', '
+	columnNotDict +=columnDict
+	column = str(tuple(columnNotDict))
+	column = column.replace("'", "")
+	value = value.strip(", ")
+	table_name = json[0]["name"]
+	insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
+	
+>>>>>>> b0ce0ea6b1dfc0d3ed2b19397d55b974537d60f3
 	return insert_query
 
 def updateTableQuery(table_name, attr_dict, condition = None):
@@ -301,8 +333,6 @@ def alterTableQuery(table_name, attr_dict):
 	value_statement = value_str.strip(", ")
 	alter_query = "ALTER TABLE {} ADD {} {};".format(table_name,key_statement, value_statement)
 	return alter_query
-
-
 
 
 
