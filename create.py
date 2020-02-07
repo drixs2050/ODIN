@@ -258,53 +258,37 @@ def insertTableJsonQuery(json):
 	return "There is nothing to insert"
 
 def insertTableQuery(json):
-	"""
-	This is a helper function that returns the INSERT TABLE statement
-	"""
-	columnNotDict = []
-	value=""
-	column = ""
-	for obj in json:
-		valueNotDict = []
-		for column_name in obj:
-			if (type(obj[column_name]) != type({})):
-				if (column_name not in columnNotDict):
-<<<<<<< HEAD
-					columnNotDict.append(column_name)
-			valueNotDict.append(obj[column_name])
-=======
-					columnNotDict.append(column_name.encode('ascii'))
-				valueNotDict.append(obj[column_name].encode('ascii'))
->>>>>>> b0ce0ea6b1dfc0d3ed2b19397d55b974537d60f3
-		for column_name in obj:
-			if (type(obj[column_name]) == type({})):
-				columnDict = ['stemname', 'numstems']
-				for stem in obj[column_name]:
-					combinedValue = valueNotDict[:]
-<<<<<<< HEAD
-					combinedValue.append(stem)
-					combinedValue.append(obj[column_name][stem])
-					value = value + str(tuple(combinedValue)) + ', '
-	columnNotDict +=columnDict 
-	column = str(tuple(columnNotDict))
-	value = value.strip(", ")
-	table_name = json[0]["name"]
-	insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
-	print(type(value))
-=======
-					combinedValue.append(stem.encode('ascii'))
-					combinedValue.append(obj[column_name][stem])
+        """
+        This is a helper function that returns the INSERT TABLE statement
+        """
+        columnNotDict = []
+        value=""
+        column = ""
+        for obj in json:
+                valueNotDict = []
+                for column_name in obj:
+                        if (type(obj[column_name]) != type({})):
+                                if (column_name not in columnNotDict):
+                                        columnNotDict.append(column_name.encode('ascii'))
+                                valueNotDict.append(obj[column_name].encode('ascii'))
+                for column_name in obj:
+                        if (type(obj[column_name]) == type({})):
+                                columnDict = ['stemname', 'numstems']
+                                for stem in obj[column_name]:
+                                        combinedValue = valueNotDict[:]
+                                        combinedValue.append(stem.encode('ascii'))
+                                        combinedValue.append(obj[column_name][stem])
 
-					value = value + str(tuple(combinedValue)) + ', '
-	columnNotDict +=columnDict
-	column = str(tuple(columnNotDict))
-	column = column.replace("'", "")
-	value = value.strip(", ")
-	table_name = json[0]["name"]
-	insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
-	
->>>>>>> b0ce0ea6b1dfc0d3ed2b19397d55b974537d60f3
-	return insert_query
+                                        value = value + str(tuple(combinedValue)) + ', '
+        columnNotDict +=columnDict
+        column = str(tuple(columnNotDict))
+        column = column.replace("'", "")
+        value = value.strip(", ")
+        table_name = json[0]["name"]
+        insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
+
+        return insert_query
+
 
 def updateTableQuery(table_name, attr_dict, condition = None):
 	"""

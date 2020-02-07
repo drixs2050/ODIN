@@ -1,4 +1,3 @@
-
 import json
 from create import *
 import getpass
@@ -73,16 +72,12 @@ def main (file_name):
 		pa = getpass.getpass()
 		
 		selectSQLQuery(username, pa)
+	
 		
-		insertTable(data)
+
 		
 			
 		
 		
 if __name__ == '__main__':
 	main("test.json")
-
-	
-	
-	
-
