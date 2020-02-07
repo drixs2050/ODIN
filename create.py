@@ -1,5 +1,5 @@
+
 import psycopg2
-import mysql.connector
 from datetime import date
 
 def getConnection():
@@ -8,19 +8,6 @@ def getConnection():
 
     return new_conn
 
-def getSQLConnection(username, pass_word):
-	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'shibboleth')
-	return new_conn
-
-def selectSQLQuery(username, pass_word):
-	conn = getSQLConnection(username, pass_word)
-	cursor = conn.cursor()
-	cursor.execute("Describe splist")
-	#cursor.execute("SELECT * FROM splist")
-	print("\nService Provider Attributes:")
-	for row in cursor.fetchall():
-		print row[0]
-	conn.close()
 
 
 def commitQuery(query, output):
@@ -314,5 +301,8 @@ def alterTableQuery(table_name, attr_dict):
 	value_statement = value_str.strip(", ")
 	alter_query = "ALTER TABLE {} ADD {} {};".format(table_name,key_statement, value_statement)
 	return alter_query
+
+
+
 
 
