@@ -12,16 +12,25 @@ def getSQLConnection(username, pass_word):
 	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'shibboleth')
 	return new_conn
 
-def selectSQLQuery(username, pass_word):
+def showSQLAttribute(username, pass_word):
 	conn = getSQLConnection(username, pass_word)
 	cursor = conn.cursor()
 	cursor.execute("Describe splist")
 	#cursor.execute("SELECT * FROM splist")
 	print("\nService Provider Attributes:")
+	i = 0 
 	for row in cursor.fetchall():
-		print row[0]
+		print ("[{}]: {}".format(i, row[0]))
+		i = i + 1
 	conn.close()
 
+def selectOneAttribute(username, pass_word, index):
+	conn = getSQLConnection(username, pass_word)
+	cursor = conn.cursor()
+	cursor.execute("SELECT * FROM splist")
+	for row in cursor.fetchall():
+		print row[index]
+	conn.close()
 
 def commitQuery(query, output):
 	"""

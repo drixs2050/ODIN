@@ -70,9 +70,11 @@ def main (file_name):
 	elif(query_type == "select"):
 		username = raw_input("Type in your username: ")
 		pa = getpass.getpass()
+		showSQLAttribute(username, pa)
+		index = raw_input("Type in the index of the attribute you want to look at: ")
+		index = int(index)
+		selectOneAttribute(username, pa, index)
 		
-		selectSQLQuery(username, pa)
-	
 		
 
 		
