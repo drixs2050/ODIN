@@ -7,7 +7,7 @@ def main (file_name):
 		with open(file_name, "r") as json_file:
 			num_dict_in_obj = 1
 			json_data = []
-			removed_data = []	
+			removed_data = []
 			for line in json_file:
 				line = line.replace("+", "")
 				line = line.replace(" ", "")
@@ -33,9 +33,9 @@ def main (file_name):
 					for j in range(len(removed_data)):
 						obj[removed_data[j]] = json.loads(dictInStr[j+1])
 					data.append(obj)
-						
-						
-				
+
+
+
 	except IOError:
 		print("Error:File does not appear to exist.")
 		return
@@ -111,10 +111,15 @@ def main (file_name):
 							    	   \n [Quit] Quit Program. \n")
                                 	print("You have typed in: {}".format(user_decision))
                                 	if (user_decision == "1"):
-                                        	showSQLAttribute(username, pa)
-                                       	 	index = raw_input("Type in the index of the attribute you want to look at: ")
-                                      		index = int(index)
-						selectOneAttribute(username, pa, index)
+                                        	max_index = showSQLAttribute(username, pa)
+						while (True):
+                                       	 		index = raw_input("Type in the index of the attribute you want to look at: ")
+                                      			index = int(index)
+							if ((0 <= index) and (index <  max_index)):
+								selectOneAttribute(username, pa, index)
+								break;
+							else:
+								print("Error: Invalid input")
                                		elif (user_decision == "-1"):
                                         	print("Returning to previous screen...\n")
 	                                        break;
@@ -149,6 +154,3 @@ def main (file_name):
 if  __name__ == '__main__':
 	main("test.json")
 
-	
-	
-	

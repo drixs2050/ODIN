@@ -1,4 +1,5 @@
 import psycopg2
+import mysql.connector
 from datetime import date
 import mysql.connector
 
@@ -23,13 +24,14 @@ def showSQLAttribute(username, pass_word):
                 print ("[{}]: {}".format(i, row[0]))
                 i = i + 1
         conn.close()
+	return i
 
 def selectOneAttribute(username, pass_word, index):
         conn = getSQLConnection(username, pass_word)
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM splist")
-        for row in cursor.fetchall():
-                print row[index]
+	for row in cursor.fetchall():
+			print row[index]
         conn.close()
 
 def checkSP(username, pass_word, sp):
@@ -41,11 +43,23 @@ def checkSP(username, pass_word, sp):
 	conn.close() 
 
 
+	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'shibboleth')
+	return new_conn
+
+
+def searchInOneAttribute(username, pass_word, attribute, key_word):
+        conn = getSQLConnection(username, pass_word)
+	cursor = conn.cursor()
+        searchfor = '%'+key_word+'%'
+        print("SELECT * FROM splist WHERE "+attribute+" LIKE "+"'"+searchfor+"'")
+	cursor.execute("SELECT * FROM splist WHERE "+attribute+" LIKE "+"'"+searchfor+"'")
+        print(cursor.fetchall())
+        conn.close
 
 def commitQuery(query, output):
 	"""
 	Prints out a successful statement if query worked. Else, print a error statement.
-	
+
 	Parameters
 	----------
 	query: str
@@ -71,39 +85,39 @@ def commitQuery(query, output):
 			print("PostgreSQL connection is closed")
 
 """
-Alter, add and remove, you don't want to update (change the data) 
+Alter, add and remove, you don't want to update (change the data)
 """
 
 def createTableJson (json):
 	"""
 	Creates a new table in the odin database based on json objects.
-	
+
 	Parameters
 	----------
 	json: dict
 		A json blob that contains the input statement that needs to be made.
 	Returns
 	-------
-	Returns a message saying Table successfully created 
-	or error statement if syntax error.	
+	Returns a message saying Table successfully created
+	or error statement if syntax error.
 	"""
 	commitQuery(createTableJsonQuery(json), "Table created successfully in PostgreSQL")
 def createTable(table_name, attr_dict):
 	"""
 	Creates a new table in the odin database.
-	
+
 	SHOULD IMPLEMENT: should delete the table if it already exists.
-	
+
 	Parameters
 	----------
 	table_name: string
 		The name of the table that is to be created.
 	attr_dict: dict
 		A dictionary where the key is the column and value is the type of the column
-	
+
 	Returns
 	-------
-	Returns a message saying Table successfully created 
+	Returns a message saying Table successfully created
 	or error statement if syntax error.
 	"""
 	commitQuery(createTableQuery(table_name,attr_dict), "Table created successfully in PostgreSQL")
@@ -113,31 +127,31 @@ def insertTableJson(json):
 	Inserts a json blobs that are to be added into the odin database.
 	"""
 	commitQuery(insertTableJsonQuery(json), "Table inserted successfully in PostgreSQL")
-	
+
 def insertTable(json):
 	"""
 	Inserts a list of values into the columns in the odin database.
-	
+
 	SHOULD IMPLEMENT: should give error if either the columnlst or valuelst is not inside the table.
-	
+
 	Parameters
 	----------
 	table_name: string
 		The name of the table that information should be inserted into.
 	attr_dict: dict
 		The dictionary where the keys at the column_name and values are the values of the column_name.
-	Returns							 
+	Returns
 	-------
 	Returns a message saying Table successfully inserted
 	or error statement if syntax error.
-	
+
 	"""
 	commitQuery(insertTableQuery(json), "Table inserted successfully in PostgreSQL")
 
 def alterTable (table_name, attr_dict):
 	"""
 	Adds one single column into the existing table.
-	
+
 	Parameters
 	----------
 	table_name: string
@@ -145,30 +159,30 @@ def alterTable (table_name, attr_dict):
 	attr_dict: dict
 		A dictionary where the keys are the column name and value is the type of the column.
 		The dictionary cannot have a length greater than 1.
-	
+
 	Returns
 	-------
 	Returns a message saying Table successfully altered
 	or error statement if syntax error.
 	"""
 	commitQuery(alterTableQuery(table_name,attr_dict), "Table altered successfully in PostgreSQL")
-	
+
 def updateTable (table_name, attr_dict, condition = None):
 	"""
-	Updates the table_name by the given attr_dict. If the condition is given, 
+	Updates the table_name by the given attr_dict. If the condition is given,
 	then updates only at the specific condition.
-	
+
 	Parameters
 	----------
 	table_name: string
 		The name of the table where the information is to be updated.
 	attr_dict: dict
-		A dictionary where the key is the column name and	
+		A dictionary where the key is the column name and
 							value is the value that is to be updated to.
 	*condition: string
 		A string that should be in the format "WHERE .....". This condition
 		statement is optional, if this is empty, updates all the columns that are given.
-	
+
 	Returns
 	-------
 	Returns a message saying Table successfully updated
@@ -179,15 +193,15 @@ def updateTable (table_name, attr_dict, condition = None):
 def deleteTable(table_name, condition):
 	"""
 	Deletes the rows of the specific condition.
-	
+
 	Parameters
 	----------
 	table_name: string
 		The name of the table in the odin database.
 	condition: string
 		A string in the format "WHERE ...." The specific condition where
-		the rows should be deleted. 
-	
+		the rows should be deleted.
+
 	Returns
 	-------
 	Returns a message saying Table successfully deleted
@@ -203,7 +217,7 @@ def selectTable (table_name, variable = None, condition = None):
 	"""
 	Selects the table to read, if the columnlst is not defined, then reads the entire table,
 	otherwise, reads the specific columns given.
-	
+
 	Parameters
 	----------
 	table_name : string
@@ -211,22 +225,22 @@ def selectTable (table_name, variable = None, condition = None):
 	*columnlst : list
 		Optional list of columns that is to be read. If the columnlst is not defined, reads the
 		entire table.
-	
+
 	Returns
 	-------
 	Returns a message saying Table successfully read
 	or error statement if syntax error.
 	"""
 	commitQuery(selectTableQuery(table_name, variable, condition), "Table read successfully in PostgreSQL")
-			
-			
+
+
 def selectTableQuery(table_name, variable = None, condition = None):
 	"""
 	This is a helper function that returns the SELECT statement
 	"""
 	if (variable != None and condition == None):
 		new_query = "SELECT {} FROM {}".format(variable, table_name)
-		
+
 	elif (variable !=None and condition != None):
 		new_query = "SELECT {} FROM {} WHERE {}".format(variable, table_name, condition)
 	else:
@@ -247,7 +261,7 @@ def createTableJsonQuery(json):
 	column_lst = column_lst.strip(", ")
 	create_sql = "CREATE TABLE {} ({});".format(json["service"],column_lst)
 	return create_sql
-	
+
 def createTableQuery(table_name ,attr_dict):
 	"""
 	This is a helper function that returns the CREATE TABLE statement
@@ -270,43 +284,44 @@ def insertTableJsonQuery(json):
 			for stem in json[column_name]:
 				statement = statement + '(' + stem + ', '
 				statement = statement + str(json[column_name][stem]) + ', '
-				statement = statement + json["run_date"] + '),'    
+				statement = statement + json["run_date"] + '),'
 			statement = statement.strip(',')
 			insert_query = "INSERT INTO {}(stem_name, numstems, run_date) VALUES {}".format(json["service"], statement)
 			return insert_query
 	return "There is nothing to insert"
 
 def insertTableQuery(json):
-	"""
-	This is a helper function that returns the INSERT TABLE statement
-	"""
-	columnNotDict = []
-	value=""
-	column = ""
-	for obj in json:
-		valueNotDict = []
-		for column_name in obj:
-			if (type(obj[column_name]) != type({})):
-				if (column_name not in columnNotDict):
-					columnNotDict.append(column_name.encode('ascii'))
-				valueNotDict.append(obj[column_name].encode('ascii'))
-		for column_name in obj:
-			if (type(obj[column_name]) == type({})):
-				columnDict = ['stemname', 'numstems']
-				for stem in obj[column_name]:
-					combinedValue = valueNotDict[:]
-					combinedValue.append(stem.encode('ascii'))
-					combinedValue.append(obj[column_name][stem])
+        """
+        This is a helper function that returns the INSERT TABLE statement
+        """
+        columnNotDict = []
+        value=""
+        column = ""
+        for obj in json:
+                valueNotDict = []
+                for column_name in obj:
+                        if (type(obj[column_name]) != type({})):
+                                if (column_name not in columnNotDict):
+                                        columnNotDict.append(column_name.encode('ascii'))
+                                valueNotDict.append(obj[column_name].encode('ascii'))
+                for column_name in obj:
+                        if (type(obj[column_name]) == type({})):
+                                columnDict = ['stemname', 'numstems']
+                                for stem in obj[column_name]:
+                                        combinedValue = valueNotDict[:]
+                                        combinedValue.append(stem.encode('ascii'))
+                                        combinedValue.append(obj[column_name][stem])
 
-					value = value + str(tuple(combinedValue)) + ', '
-	columnNotDict +=columnDict
-	column = str(tuple(columnNotDict))
-	column = column.replace("'", "")
-	value = value.strip(", ")
-	table_name = json[0]["name"]
-	insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
-	
-	return insert_query
+                                        value = value + str(tuple(combinedValue)) + ', '
+        columnNotDict +=columnDict
+        column = str(tuple(columnNotDict))
+        column = column.replace("'", "")
+        value = value.strip(", ")
+        table_name = json[0]["name"]
+        insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
+
+        return insert_query
+
 
 def updateTableQuery(table_name, attr_dict, condition = None):
 	"""
@@ -321,7 +336,7 @@ def updateTableQuery(table_name, attr_dict, condition = None):
 	else:
 		new_query = "UPDATE {} SET {} WHERE {};".format(table_name,statement,condition)
 	return new_query
-	
+
 def alterTableQuery(table_name, attr_dict):
 	"""
 	This is a helper function that returns the ALTER statement
@@ -335,6 +350,4 @@ def alterTableQuery(table_name, attr_dict):
 	value_statement = value_str.strip(", ")
 	alter_query = "ALTER TABLE {} ADD {} {};".format(table_name,key_statement, value_statement)
 	return alter_query
-
-
 
