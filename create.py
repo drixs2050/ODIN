@@ -34,18 +34,26 @@ def selectOneAttribute(username, pass_word, index):
 			print row[index]
         conn.close()
 
+def checkValidSP(username,pass_word, sp):
+	conn = getSQLConnection(username, pass_word)
+	cursor = conn.cursor()
+	cursor.execute("SELECT entityID from splist where entityID = '{}'".format(sp))
+	if (cursor.fetchone() == None):
+		return -1
+	return 0 
+
 def checkSP(username, pass_word, sp):
 	conn = getSQLConnection(username, pass_word)
 	cursor = conn.cursor()
+	validSPCheck = checkValidSP(username, pass_word, sp)
+	if (validSPCheck == -1):
+		conn.close()
+		print("\nThe service provider does not exist")
+		return -1
 	cursor.execute("SELECT contactpname, contactemail FROM splist where entityID = '{}'".format(sp))
 	for row in cursor.fetchall():
 		print("\nAdmin: {}, Contact: {}".format(row[0], row[1]))
 	conn.close() 
-
-
-	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'shibboleth')
-	return new_conn
-
 
 def searchInOneAttribute(username, pass_word, attribute, key_word):
         conn = getSQLConnection(username, pass_word)
@@ -54,7 +62,53 @@ def searchInOneAttribute(username, pass_word, attribute, key_word):
         print("SELECT * FROM splist WHERE "+attribute+" LIKE "+"'"+searchfor+"'")
 	cursor.execute("SELECT * FROM splist WHERE "+attribute+" LIKE "+"'"+searchfor+"'")
         print(cursor.fetchall())
-        conn.close
+        conn.close()
+
+def showAllTablesODIN(print_boolean):
+	try:
+		conn = getConnection()
+		cursor = conn.cursor()
+		query = """Select a."Name" from (
+SELECT n.nspname as "Schema",
+  c.relname as "Name",
+  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' END as "Type",
+  pg_catalog.pg_get_userbyid(c.relowner) as "Owner"
+FROM pg_catalog.pg_class c
+     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+WHERE c.relkind IN ('r','v','S','f','')
+      AND n.nspname <> 'pg_catalog'
+      AND n.nspname <> 'information_schema'
+      AND n.nspname !~ '^pg_toast'
+  AND pg_catalog.pg_table_is_visible(c.oid)
+ORDER BY 1,2) a"""
+		cursor.execute(query)
+		table_lst = []
+		for row in cursor.fetchall():
+			if (print_boolean == True):
+				print(row[0])
+			else:
+				table_lst.append(row[0])
+	except (Exception, psycopg2.Error) as error:
+		print ("Error while connecting to PostgreSQL", error)
+	finally:
+		if (conn):
+			cursor.close()
+			conn.close()
+			if (print_boolean == False):
+				return table_lst
+		
+def addComment(table_name, comment):
+	try: 
+		conn = getConnection()
+		cursor = conn.cursor()
+		cursor.execute("COMMENT ON TABLE {} IS '{}';".format(table_name, comment))
+		conn.commit()
+	except (Exception, psycopg2.Error) as error:
+		print ("Error while connecting to PostgreSQL", error)
+	finally:
+		if (conn):
+			cursor.close()
+			conn.close()
 
 def commitQuery(query, output):
 	"""
@@ -88,21 +142,7 @@ def commitQuery(query, output):
 Alter, add and remove, you don't want to update (change the data)
 """
 
-def createTableJson (json):
-	"""
-	Creates a new table in the odin database based on json objects.
-
-	Parameters
-	----------
-	json: dict
-		A json blob that contains the input statement that needs to be made.
-	Returns
-	-------
-	Returns a message saying Table successfully created
-	or error statement if syntax error.
-	"""
-	commitQuery(createTableJsonQuery(json), "Table created successfully in PostgreSQL")
-def createTable(table_name, attr_dict):
+def createTable(table_name,var_dict):
 	"""
 	Creates a new table in the odin database.
 
@@ -112,15 +152,13 @@ def createTable(table_name, attr_dict):
 	----------
 	table_name: string
 		The name of the table that is to be created.
-	attr_dict: dict
-		A dictionary where the key is the column and value is the type of the column
 
 	Returns
 	-------
 	Returns a message saying Table successfully created
 	or error statement if syntax error.
 	"""
-	commitQuery(createTableQuery(table_name,attr_dict), "Table created successfully in PostgreSQL")
+	commitQuery(createTableQuery(table_name, var_dict), "Table created successfully in PostgreSQL")
 
 def insertTableJson(json):
 	"""
@@ -148,7 +186,7 @@ def insertTable(json):
 	"""
 	commitQuery(insertTableQuery(json), "Table inserted successfully in PostgreSQL")
 
-def alterTable (table_name, attr_dict):
+def alterTable (table_name, column_name, column_type):
 	"""
 	Adds one single column into the existing table.
 
@@ -165,7 +203,7 @@ def alterTable (table_name, attr_dict):
 	Returns a message saying Table successfully altered
 	or error statement if syntax error.
 	"""
-	commitQuery(alterTableQuery(table_name,attr_dict), "Table altered successfully in PostgreSQL")
+	commitQuery(alterTableQuery(table_name, column_name, column_type), "Table altered successfully in PostgreSQL")
 
 def updateTable (table_name, attr_dict, condition = None):
 	"""
@@ -247,32 +285,17 @@ def selectTableQuery(table_name, variable = None, condition = None):
 		new_query = "SELECT * FROM {}".format(table_name)
 	return new_query
 
-def createTableJsonQuery(json):
-	"""
-	This is a helper function that returns the CREATE TABLE statement
-	"""
-	column_lst = ''
-	for column_name in json:
-		if ("date" in column_name):
-			column_lst = column_lst + column_name + " date, "
-		elif (type(json[column_name]) == type({})):
-			column_lst = column_lst + "stem_name " + "varchar, "
-			column_lst = column_lst + "numstems " + "int, "
-	column_lst = column_lst.strip(", ")
-	create_sql = "CREATE TABLE {} ({});".format(json["service"],column_lst)
-	return create_sql
-
 def createTableQuery(table_name ,attr_dict):
-	"""
-	This is a helper function that returns the CREATE TABLE statement
-	"""
-	data_str = ''
-	for keys in attr_dict:
-		statement = keys + ' ' + attr_dict[keys] + ', '
-		data_str = data_str + statement
-	data_statement = data_str.strip(', ')
-	new_query = "CREATE TABLE {} ({});".format(table_name, data_statement)
-	return new_query
+        """
+        This is a helper function that returns the CREATE TABLE statement
+        """
+        data_str = ''
+        for keys in attr_dict:
+                statement = keys + ' ' + attr_dict[keys] + ', '
+                data_str = data_str + statement
+        data_statement = data_str.strip(', ')
+        new_query = "CREATE TABLE {} ({});".format(table_name, data_statement)
+        return new_query
 
 def insertTableJsonQuery(json):
 	"""
@@ -337,17 +360,11 @@ def updateTableQuery(table_name, attr_dict, condition = None):
 		new_query = "UPDATE {} SET {} WHERE {};".format(table_name,statement,condition)
 	return new_query
 
-def alterTableQuery(table_name, attr_dict):
+def alterTableQuery(table_name, column_name, column_type):
 	"""
 	This is a helper function that returns the ALTER statement
 	"""
-	key_str = ''
-	value_str = ''
-	for keys in attr_dict:
-		key_str = key_str + keys + ", "
-		value_str = value_str + attr_dict[keys] + ", "
-	key_statement = key_str.strip(", ")
-	value_statement = value_str.strip(", ")
-	alter_query = "ALTER TABLE {} ADD {} {};".format(table_name,key_statement, value_statement)
+	
+	alter_query = "ALTER TABLE {} ADD {} {};".format(table_name,column_name, column_type)
 	return alter_query
 

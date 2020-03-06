@@ -1,11 +1,12 @@
 import json
 from create import *
 import getpass
+import email
 
 def main (file_name):
 	try:
 		with open(file_name, "r") as json_file:
-			num_dict_in_obj = 1
+			num_dict_in_obj = 0
 			json_data = []
 			removed_data = []
 			for line in json_file:
@@ -17,25 +18,38 @@ def main (file_name):
 				elif(line.find(":{")!= -1):
 					line = line.replace(":{", "")
 					if (line not in removed_data):
-						num_dict_in_obj +=1
+						num_dict_in_obj = num_dict_in_obj + 1
 						removed_data.append(line)
-					json_data.append("}{")
+					json_data.append("}add_name_dict_here,{")
+			
 			dictInStr = "".join(json_data)
+			dictInStr = dictInStr.replace("}{", "}*{")
 			dictInStr = dictInStr.replace(",}", "}")
-			dictInStr = dictInStr.replace("}{", "},*{")
-			dictInStr = dictInStr.replace(",{",",*{")
-			dictInStr = dictInStr.replace("}}", "}")
-			dictInStr = dictInStr.split(",*")
+			#dictInStr = dictInStr.replace("}{", "},*{")
+			#dictInStr = dictInStr.replace(",{","{")
+			#dictInStr = dictInStr.replace("}}", "}")
+			
+			dictInStr = dictInStr.split("*")
 			data = []
+			data_len = []
 			for i in range(len(dictInStr)):
-				if (i%2 == 0):
-					obj = json.loads(dictInStr[i])
+				blob = dictInStr[i].replace("}}","}")
+				blob = blob.split("add_name_dict_here,")
+				blob_len = 0
+				if (len(blob) > 1):
+					for first_index in range(len(blob) - len(removed_data)):
+						obj = json.loads(blob[first_index])
+						blob_len = blob_len + len(obj)
 					for j in range(len(removed_data)):
-						obj[removed_data[j]] = json.loads(dictInStr[j+1])
-					data.append(obj)
-
-
-
+						obj[removed_data[j]] = json.loads(blob[j+1])
+						blob_len = blob_len + len(obj[removed_data[j]])
+				else:	
+					for fisrt_index in range(len(blob)):
+						obj = json.loads(blob[first_index])
+					blob_len = len(obj)
+				data.append(obj)
+				data_len.append(blob_len)
+			print(data_len)
 	except IOError:
 		print("Error:File does not appear to exist.")
 		return
@@ -48,13 +62,17 @@ def main (file_name):
 		
 		if(query_type == "create"):
 			print("You have entered: {}".format(query_type))
+			showAllTablesODIN(True)
 			table_name = raw_input("Choose the title of your table: ")
-			print("Possible variable types: \n [varchar] [stemname: varchar] [numstems: Int]")
-			#Should check if the table exists or not.
-			if (len(data[0]) == len(data[-1])):
+			my_tables = showAllTablesODIN(False)
+			if (table_name in my_tables):
+				print("Error: {} already exists in the database\n".format(table_name))
+			else:
+				print("Possible variable types: \n [varchar] [stemname: varchar] [numstems: Int]")	
 				var_dict = {}
-				for column in data[0]:
-					if (type(data[0][column]) == type({})):	
+				max_data_index = data.index(max(data))
+				for column in data[max_data_index]:
+					if (type(data[max_data_index][column]) == type({})):
 						first_column = raw_input("Give first column_name for {}: ".format(column))
 						first_var = raw_input("variable type of {}: ".format(first_column))
 						second_column = raw_input("Give second column_name for {}: ".format(column))
@@ -65,7 +83,7 @@ def main (file_name):
 						var = raw_input("Variable type of {}: ".format(column))
 						var_dict[column] = var
 				
-			createTable(table_name, var_dict)
+				createTable(table_name, var_dict)
 		
 											
 		elif(query_type == "insert"):
@@ -74,6 +92,7 @@ def main (file_name):
 				user_decision = raw_input("\nChoose the following option: \
 				 	  \n [1] Input json blob into exisiting table inside ODIN Database \
 				  	  \n [2] Add column in the exisitng table \
+					  \n [3] Add comment to table \
 				 	  \n [-1] Return to previous screen  \
 					  \n [Quit] Exit the program  \
 				 	  \n Your response: ")
@@ -81,7 +100,27 @@ def main (file_name):
 					#Should implement where it shows all the table_name in the database. Use select for this and show.
 					insertTable(data)
 				elif(user_decision == "2"):
-					print("do something");
+					#Show the existing tables 
+					print("List of tables in the ODIN database:")
+					showAllTablesODIN(True)	
+					#ask for user to chose from this.
+					
+					table = raw_input("\nChoose from the following list of tables to add a description to:  ")
+						
+					#Ask the user for the column to add and also the type
+					column_name = raw_input("\nType in the column_name that you would like to add:  ");
+					column_type = raw_input("\nType in the column_type for {}:  ".format(column_name));	
+					#alter the table
+					alterTable(table, column_name, column_type)	
+					
+				elif (user_decision == "3"):
+					print("List of tables in the ODIN database:")
+					showAllTablesODIN(True)
+					table = raw_input("\nChoose from the following list of tables to add a description to:  ")
+					comment = raw_input("\nType in the comment that you would like to add:  ");
+					if ("'" in comment):
+						comment = comment.replace("'", "''")
+					addComment(table, comment)	
 				elif (user_decision == "-1"):
 					print("Returning to previous screen... \n")
 					break;
@@ -137,19 +176,8 @@ def main (file_name):
 			print("Exiting...\n")
 			exit(1)
 		else:
-			print("Invalid option\n")
-			
-	
+			print("Invalid option\n")	
 
-
-
-
-
-
-
-		
-			
-		
 		
 if  __name__ == '__main__':
 	main("test.json")
