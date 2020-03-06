@@ -1,11 +1,10 @@
 import psycopg2
 import mysql.connector
 from datetime import date
-import mysql.connector
 
-def getConnection():
+def getConnection(username):
 
-    new_conn = psycopg2.connect(user = 'parktae7', database = 'odin')
+    new_conn = psycopg2.connect(user = username , database = 'odin')
 
     return new_conn
 
@@ -64,9 +63,9 @@ def searchInOneAttribute(username, pass_word, attribute, key_word):
         print(cursor.fetchall())
         conn.close()
 
-def showAllTablesODIN(print_boolean):
+def showAllTablesODIN(print_boolean, username):
 	try:
-		conn = getConnection()
+		conn = getConnection(username)
 		cursor = conn.cursor()
 		query = """Select a."Name" from (
 SELECT n.nspname as "Schema",
@@ -97,9 +96,9 @@ ORDER BY 1,2) a"""
 			if (print_boolean == False):
 				return table_lst
 		
-def addComment(table_name, comment):
+def addComment(table_name, comment, username):
 	try: 
-		conn = getConnection()
+		conn = getConnection(username)
 		cursor = conn.cursor()
 		cursor.execute("COMMENT ON TABLE {} IS '{}';".format(table_name, comment))
 		conn.commit()
@@ -110,7 +109,7 @@ def addComment(table_name, comment):
 			cursor.close()
 			conn.close()
 
-def commitQuery(query, output):
+def commitQuery(query, output, username):
 	"""
 	Prints out a successful statement if query worked. Else, print a error statement.
 
@@ -122,7 +121,7 @@ def commitQuery(query, output):
 		This string is the expected output that is printed depending on the query.
 	"""
 	try:
-		conn = getConnection()
+		conn = getConnection(username)
 		cursor = conn.cursor()
 		cursor.execute("SELECT version();")
 		record = cursor.fetchone()
@@ -142,7 +141,7 @@ def commitQuery(query, output):
 Alter, add and remove, you don't want to update (change the data)
 """
 
-def createTable(table_name,var_dict):
+def createTable(table_name,var_dict, username):
 	"""
 	Creates a new table in the odin database.
 
@@ -158,15 +157,15 @@ def createTable(table_name,var_dict):
 	Returns a message saying Table successfully created
 	or error statement if syntax error.
 	"""
-	commitQuery(createTableQuery(table_name, var_dict), "Table created successfully in PostgreSQL")
+	commitQuery(createTableQuery(table_name, var_dict), "Table created successfully in PostgreSQL", username)
 
-def insertTableJson(json):
+def insertTableJson(json, username):
 	"""
 	Inserts a json blobs that are to be added into the odin database.
 	"""
-	commitQuery(insertTableJsonQuery(json), "Table inserted successfully in PostgreSQL")
+	commitQuery(insertTableJsonQuery(json), "Table inserted successfully in PostgreSQL", username)
 
-def insertTable(json):
+def insertTable(json, username):
 	"""
 	Inserts a list of values into the columns in the odin database.
 
@@ -184,9 +183,9 @@ def insertTable(json):
 	or error statement if syntax error.
 
 	"""
-	commitQuery(insertTableQuery(json), "Table inserted successfully in PostgreSQL")
+	commitQuery(insertTableQuery(json), "Table inserted successfully in PostgreSQL", username)
 
-def alterTable (table_name, column_name, column_type):
+def alterTable (table_name, column_name, column_type, username):
 	"""
 	Adds one single column into the existing table.
 
@@ -203,7 +202,7 @@ def alterTable (table_name, column_name, column_type):
 	Returns a message saying Table successfully altered
 	or error statement if syntax error.
 	"""
-	commitQuery(alterTableQuery(table_name, column_name, column_type), "Table altered successfully in PostgreSQL")
+	commitQuery(alterTableQuery(table_name, column_name, column_type), "Table altered successfully in PostgreSQL", username)
 
 def updateTable (table_name, attr_dict, condition = None):
 	"""
@@ -247,9 +246,9 @@ def deleteTable(table_name, condition):
 	"""
 	commitQuery("DELETE FROM {} {};".format(table_name, condition), "Table deletected successfully in PostgreSQL")
 
-def dropTable (table_name):
+def dropTable (table_name, username):
 
-	commitQuery("Drop table {};".format(table_name), "Table dropped successfully in PostgreSQL")
+	commitQuery("Drop table {};".format(table_name), "Table dropped successfully in PostgreSQL", username)
 
 def selectTable (table_name, variable = None, condition = None):
 	"""

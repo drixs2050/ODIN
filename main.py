@@ -49,10 +49,17 @@ def main (file_name):
 					blob_len = len(obj)
 				data.append(obj)
 				data_len.append(blob_len)
-			print(data_len)
 	except IOError:
 		print("Error:File does not appear to exist.")
 		return
+	while(True):
+		try:
+			psql_user = raw_input("Type in your username: ")
+			getConnection(psql_user)
+			print(psql_user)
+			break;	
+		except:
+			print("Incorrect username\n");	
 	while(True):
 		query_type = raw_input("Type in a query -- \n [create] Create Table in ODIN Database \
 						           \n [insert] Insert into existing Table depending on the table_name specified in json file \
@@ -62,9 +69,9 @@ def main (file_name):
 		
 		if(query_type == "create"):
 			print("You have entered: {}".format(query_type))
-			showAllTablesODIN(True)
+			showAllTablesODIN(True, psql_user)
 			table_name = raw_input("Choose the title of your table: ")
-			my_tables = showAllTablesODIN(False)
+			my_tables = showAllTablesODIN(False, psql_user)
 			if (table_name in my_tables):
 				print("Error: {} already exists in the database\n".format(table_name))
 			else:
@@ -83,7 +90,7 @@ def main (file_name):
 						var = raw_input("Variable type of {}: ".format(column))
 						var_dict[column] = var
 				
-				createTable(table_name, var_dict)
+				createTable(table_name, var_dict, psql_user)
 		
 											
 		elif(query_type == "insert"):
@@ -98,11 +105,11 @@ def main (file_name):
 				 	  \n Your response: ")
 				if (user_decision == "1"):
 					#Should implement where it shows all the table_name in the database. Use select for this and show.
-					insertTable(data)
+					insertTable(data, psql_user)
 				elif(user_decision == "2"):
 					#Show the existing tables 
 					print("List of tables in the ODIN database:")
-					showAllTablesODIN(True)	
+					showAllTablesODIN(True,psql_user)	
 					#ask for user to chose from this.
 					
 					table = raw_input("\nChoose from the following list of tables to add a description to:  ")
@@ -111,16 +118,16 @@ def main (file_name):
 					column_name = raw_input("\nType in the column_name that you would like to add:  ");
 					column_type = raw_input("\nType in the column_type for {}:  ".format(column_name));	
 					#alter the table
-					alterTable(table, column_name, column_type)	
+					alterTable(table, column_name, column_type, psql_user)	
 					
 				elif (user_decision == "3"):
 					print("List of tables in the ODIN database:")
-					showAllTablesODIN(True)
+					showAllTablesODIN(True, psql_user)
 					table = raw_input("\nChoose from the following list of tables to add a description to:  ")
 					comment = raw_input("\nType in the comment that you would like to add:  ");
 					if ("'" in comment):
 						comment = comment.replace("'", "''")
-					addComment(table, comment)	
+					addComment(table, comment, psql_user)	
 				elif (user_decision == "-1"):
 					print("Returning to previous screen... \n")
 					break;
@@ -180,5 +187,5 @@ def main (file_name):
 
 		
 if  __name__ == '__main__':
-	main("test.json")
+	main("testv2.json")
 
