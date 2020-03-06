@@ -1,0 +1,185 @@
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-21", 
+    "run_time": "0:00:00.059820", 
+    "service_environment": "EASI", 
+    "service_title": "UTORGrouperEASI230", 
+    "service_version": "2.3.0", 
+    "stem_counts": {
+        "acad": 136, 
+        "apps": 4, 
+        "etc": 4, 
+        "utorable": 224, 
+        "x-total": 368
+    }
+}
+
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-21", 
+    "service_environment": "DEV", 
+    "service_title": "UTORGrouper240", 
+    "service_version": "2.4.0"
+}
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-21", 
+    "run_time": "0:02:26.094127", 
+    "service_environment": "PROD", 
+    "service_title": "UTORGrouper221", 
+    "service_version": "2.2.1", 
+    "stem_counts": {
+        "acad": 308, 
+        "access": 7, 
+        "apps": 1142, 
+        "basis": 3728, 
+        "etc": 15, 
+        "lists": 3, 
+        "reference": 11, 
+        "test": 28, 
+        "utorable": 17241, 
+        "x-total": 22483
+    }
+}
+
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-22", 
+    "service_environment": "DEV", 
+    "service_title": "UTORGrouper240", 
+    "service_version": "2.4.0"
+}
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-22", 
+    "run_time": "0:00:00.062170", 
+    "service_environment": "EASI", 
+    "service_title": "UTORGrouperEASI230", 
+    "service_version": "2.3.0", 
+    "stem_counts": {
+        "acad": 136, 
+        "apps": 4, 
+        "etc": 4, 
+        "utorable": 224, 
+        "x-total": 368
+    }
+}
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-22", 
+    "run_time": "0:02:24.423370", 
+    "service_environment": "PROD", 
+    "service_title": "UTORGrouper221", 
+    "service_version": "2.2.1", 
+    "stem_counts": {
+        "acad": 308, 
+        "access": 7, 
+        "apps": 1142, 
+        "basis": 3728, 
+        "etc": 15, 
+        "lists": 3, 
+        "reference": 11, 
+        "test": 28, 
+        "utorable": 17241, 
+        "x-total": 22483
+    }
+}
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-23", 
+    "run_time": "0:00:00.061392", 
+    "service_environment": "EASI", 
+    "service_title": "UTORGrouperEASI230", 
+    "service_version": "2.3.0", 
+    "stem_counts": {
+        "acad": 136, 
+        "apps": 4, 
+        "etc": 4, 
+        "utorable": 224, 
+        "x-total": 368
+    }
+}
+
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-23", 
+    "service_environment": "DEV", 
+    "service_title": "UTORGrouper240", 
+    "service_version": "2.4.0"
+}
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-23", 
+    "run_time": "0:02:25.180338", 
+    "service_environment": "PROD", 
+    "service_title": "UTORGrouper221", 
+    "service_version": "2.2.1", 
+    "stem_counts": {
+        "acad": 308, 
+        "access": 7, 
+        "apps": 1142, 
+        "basis": 3728, 
+        "etc": 15, 
+        "lists": 3, 
+        "reference": 11, 
+        "test": 28, 
+        "utorable": 17241, 
+        "x-total": 22483
+    }
+}
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-24", 
+    "run_time": "0:00:00.062056", 
+    "service_environment": "EASI", 
+    "service_title": "UTORGrouperEASI230", 
+    "service_version": "2.3.0", 
+    "stem_counts": {
+        "acad": 136, 
+        "apps": 4, 
+        "etc": 4, 
+        "utorable": 224, 
+        "x-total": 368
+    }
+}
+
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-24", 
+    "service_environment": "DEV", 
+    "service_title": "UTORGrouper240", 
+    "service_version": "2.4.0"
+}
+
+{
+    "name": "Grouper", 
+    "run_date": "2020-02-24", 
+    "run_time": "0:02:26.816425", 
+    "service_environment": "PROD", 
+    "service_title": "UTORGrouper221", 
+    "service_version": "2.2.1", 
+    "stem_counts": {
+        "acad": 308, 
+        "access": 7, 
+        "apps": 1142, 
+        "basis": 3728, 
+        "etc": 15, 
+        "lists": 3, 
+        "reference": 11, 
+        "test": 28, 
+        "utorable": 17256, 
+        "x-total": 22498
+    }
+}
+
+
