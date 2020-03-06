@@ -1,0 +1,22 @@
+{
+    "name": "Grouper", 
+    "run_date": "2019-12-09", 
+    "run_time": "0:01:19.840661", 
+    "service_environment": "DEV", 
+    "service_title": "UTORGrouper240", 
+    "service_version": "2.4.0", 
+    "stem_counts": {
+        "acad": 303, 
+        "access": 5, 
+        "apps": 1091, 
+        "basis": 3630, 
+        "etc": 13, 
+        "lists": 3, 
+        "reference": 11, 
+        "test": 29, 
+        "utoraad": 19, 
+        "utorable": 16388, 
+        "utoread": 23, 
+        "x-total": 21515
+    }
+}
