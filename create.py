@@ -11,7 +11,9 @@ def getConnection(username):
 def getSQLConnection(username, pass_word):
     new_conn = mysql.connector.connect(user=username, password=pass_word, database='shibboleth')
     return new_conn
-
+def getEtokenConnection(username, pass_word):
+	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'etoken')
+	return new_conn
 
 def showSQLAttribute(username, pass_word):
     conn = getSQLConnection(username, pass_word)
@@ -388,7 +390,7 @@ def alterTableQuery(table_name, column_name, column_type):
     return alter_query
 
 def countvirtual(username, pass_word):
-    conn = getSQLConnection(username, pass_word)
+    conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute("select count(*) from usertokens where productname like '%virtual%';")
-    print(cursor.fetchone)
+    print(cursor.fetchone()[0])
