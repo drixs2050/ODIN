@@ -400,3 +400,12 @@ def countServiceProvider(username, pass_word):
     cursor = conn.cursor()
     cursor.execute("select count(*) from splist;")
     print(cursor.fetchone()[0])
+
+def countNormal(username, pass_word):
+    conn = getEtokenConnection(username, pass_word)
+    cursor = conn.cursor()
+    cursor.execute("select count(*) from usertokens where productname like '%virtual%';")
+    virtual = cursor.fetchone()[0]
+    cursor.execute("select count(*) from usertokens;")
+    all = cursor.fetchone()[0]
+    normal = int(all) - int(virtual)
