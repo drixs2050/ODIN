@@ -173,6 +173,8 @@ def main(file_name):
                     elif (user_decision == "2"):
                         sp = input("Type in a service provider that you want to look up: ")
                         checkSP(username, pa, sp)
+                    elif(user_decision == "3"):
+                        countServiceProvider(username, pa)
                     elif (user_decision.lower() == "Quit".lower()):
                         print("Exiting the program ... \n")
                         exit(1)

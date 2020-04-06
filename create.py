@@ -394,3 +394,9 @@ def countvirtual(username, pass_word):
     cursor = conn.cursor()
     cursor.execute("select count(*) from usertokens where productname like '%virtual%';")
     print(cursor.fetchone()[0])
+
+def countServiceProvider(username, pass_word):
+    conn = getSQLConnection(username, pass_word)
+    cursor = conn.cursor()
+    cursor.execute("select count(*) from usertokens;")
+    print(cursor.fetchone()[0])
