@@ -398,5 +398,5 @@ def countvirtual(username, pass_word):
 def countServiceProvider(username, pass_word):
     conn = getSQLConnection(username, pass_word)
     cursor = conn.cursor()
-    cursor.execute("select count(*) from usertokens;")
+    cursor.execute("select count(*) from splist;")
     print(cursor.fetchone()[0])
