@@ -63,10 +63,11 @@ def main(file_name):
             print("Incorrect username\n")
     while (True):
         query_type = input("Type in a query -- \n [create] Create Table in ODIN Database \
-						           \n [insert] Insert into existing Table depending on the table_name specified in json file \
-							   \n [select] Look up Service Providers \
-						           \n [2] Quit Program \
-							   \n Your response:  ")
+                                   \n [insert] Insert into existing Table depending on the table_name specified in json file \
+                               \n [select] Look up Service Providers \
+                               \n [etoken] Look up etoken database \
+                                   \n [2] Quit Program \
+                               \n Your response:  ")
 
         if (query_type == "create"):
             print("You have entered: {}".format(query_type))
@@ -98,12 +99,12 @@ def main(file_name):
             print("You have entered: {}".format(query_type))
             while (True):
                 user_decision = input("\nChoose the following option: \
-				 	  \n [1] Input json blob into exisiting table inside ODIN Database \
-				  	  \n [2] Add column in the exisitng table \
-					  \n [3] Add comment to table \
-				 	  \n [-1] Return to previous screen  \
-					  \n [Quit] Exit the program  \
-				 	  \n Your response: ")
+                      \n [1] Input json blob into exisiting table inside ODIN Database \
+                      \n [2] Add column in the exisitng table \
+                      \n [3] Add comment to table \
+                      \n [-1] Return to previous screen  \
+                      \n [Quit] Exit the program  \
+                      \n Your response: ")
                 if (user_decision == "1"):
                     # Should implement where it shows all the table_name in the database. Use select for this and show.
                     insertTable(data, psql_user)
@@ -152,10 +153,11 @@ def main(file_name):
             while (True):
                 try:
                     user_decision = input("\nChoose the index from the following option -- \
-								   \n [1] Visualize modularized data \
-								   \n [2] View admin(s) for a single Service Provider \
+                                   \n [1] Visualize modularized data \
+                                   \n [2] View admin(s) for a single Service Provider \
+                                   \n [3] Count total SP \
                                                                    \n [-1] Return to Previous screen \
-							    	   \n [Quit] Quit Program. \n")
+                                       \n [Quit] Quit Program. \n")
                     print("You have typed in: {}".format(user_decision))
                     if (user_decision == "1"):
                         max_index = showSQLAttribute(username, pa)
@@ -182,14 +184,32 @@ def main(file_name):
                         print("Invalid input")
                 except ValueError:
                     print("Non-numeric input detected.")
-        elif (query_type == "virtual"):
+        elif (query_type == "etoken"):
             username = input("Type in your username: ")
             pa = getpass.getpass()
-            countvirtual(username, pa)
-        elif(query_type == "normal etoken"):
-            username = input("Type in your username: ")
-            pa = getpass.getpass()
-            countNormal(username, pa)
+        
+            while (True):
+                try:
+                    user_decision = input("\nChoose the index from the following option -- \
+                        \n [1] Get Total virtual etoken count \
+                        \n [2] Get Total etoken count \
+                        \n [-1] Return to Previous screen \
+                        \n [Quit] Quit Program. \n")
+                    print("You have typed in {}".format(user_decision))
+                    if (user_decision == "1"):
+                        countvirtual(username, pa)
+                    elif (user_decision == "2"):
+                        countNormal(username, pa)
+                    elif(user_decision == "-1"):
+                        print("Returning to previous screen...\n")
+                        break 
+                    elif(user_decision.lower() == "Quit".lower()):
+                        print("Exiting the program ... \n")
+                        exit(1)
+                    else:
+                        print("Invalid input")
+                except:
+                    print("Non-numeric input detected.")
         elif (query_type == "2"):
             print("Exiting...\n")
             exit(1)
