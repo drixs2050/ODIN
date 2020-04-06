@@ -186,6 +186,10 @@ def main(file_name):
             username = input("Type in your username: ")
             pa = getpass.getpass()
             countvirtual(username, pa)
+        elif(query_type == "normal etoken"):
+            username = input("Type in your username: ")
+            pa = getpass.getpass()
+            countNormal(username, pa)
         elif (query_type == "2"):
             print("Exiting...\n")
             exit(1)
