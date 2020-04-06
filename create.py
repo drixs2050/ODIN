@@ -409,3 +409,4 @@ def countNormal(username, pass_word):
     cursor.execute("select count(*) from usertokens;")
     all = cursor.fetchone()[0]
     normal = int(all) - int(virtual)
+    print(normal)
