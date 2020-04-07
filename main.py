@@ -204,6 +204,8 @@ def main(file_name):
                         countNormal(username, pa)
                     elif(user_decision == "3"):
                         showVirtualUsers(username, pa)
+                    elif(user_decision == "4"):
+                        showExpiring(username, pa)
                     elif(user_decision == "-1"):
                         print("Returning to previous screen...\n")
                         break 

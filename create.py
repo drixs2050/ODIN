@@ -418,3 +418,11 @@ def showVirtualUsers(username, pass_word):
     all = cursor.fetchall()
     for i in all:
         print(i[0])
+
+def showExpiring(username, pass_word):
+    conn = getEtokenConnection(username, pass_word)
+    cursor = conn.cursor()
+    cursor.execute("select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + 14;")
+    all = cursor.fetchall()
+    for i in all:
+        print(i[0])
