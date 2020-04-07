@@ -189,10 +189,12 @@ def main(file_name):
             pa = getpass.getpass()
         
             while (True):
+		
                 try:
                     user_decision = input("\nChoose the index from the following option -- \
                         \n [1] Get Total virtual etoken count \
                         \n [2] Get Total etoken count \
+			\n [3] Get all the UTORID with virtual etoken \
                         \n [-1] Return to Previous screen \
                         \n [Quit] Quit Program. \n")
                     print("You have typed in {}".format(user_decision))
@@ -201,7 +203,7 @@ def main(file_name):
                     elif (user_decision == "2"):
                         countNormal(username, pa)
                     elif(user_decision == "3"):
-                        showVirtualUsers()
+                        showVirtualUsers(username, pa)
                     elif(user_decision == "-1"):
                         print("Returning to previous screen...\n")
                         break 
@@ -210,7 +212,7 @@ def main(file_name):
                         exit(1)
                     else:
                         print("Invalid input")
-                except:
+                except ValueError:
                     print("Non-numeric input detected.")
         elif (query_type == "2"):
             print("Exiting...\n")
