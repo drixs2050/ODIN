@@ -200,6 +200,8 @@ def main(file_name):
                         countvirtual(username, pa)
                     elif (user_decision == "2"):
                         countNormal(username, pa)
+                    elif(user_decision == "3"):
+                        showVirtualUsers()
                     elif(user_decision == "-1"):
                         print("Returning to previous screen...\n")
                         break 
