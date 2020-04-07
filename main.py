@@ -193,8 +193,10 @@ def main(file_name):
                 try:
                     user_decision = input("\nChoose the index from the following option -- \
                         \n [1] Get Total virtual etoken count \
-                        \n [2] Get Total etoken count \
+                        \n [2] Get Total physical etoken count \
 			\n [3] Get all the UTORID with virtual etoken \
+                    \n [4] Get all the UTORID with etoken certificate expiring in 14 days \
+                    \n [5] Get Total 2FA device count \
                         \n [-1] Return to Previous screen \
                         \n [Quit] Quit Program. \n")
                     print("You have typed in {}".format(user_decision))
@@ -206,6 +208,8 @@ def main(file_name):
                         showVirtualUsers(username, pa)
                     elif(user_decision == "4"):
                         showExpiring(username, pa)
+                    elif(user_decision == "5"):
+                        countall(username, pa)
                     elif(user_decision == "-1"):
                         print("Returning to previous screen...\n")
                         break 

@@ -389,6 +389,12 @@ def alterTableQuery(table_name, column_name, column_type):
     alter_query = "ALTER TABLE {} ADD {} {};".format(table_name, column_name, column_type)
     return alter_query
 
+def countall(username, pass_word):
+    conn = getSQLConnection(username, pass_word)
+    cursor = conn.cursor()
+    cursor.execute("select count(*) from usertokens;")
+    print(cursor.fetchone()[0])
+
 def countvirtual(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
