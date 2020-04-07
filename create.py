@@ -417,4 +417,4 @@ def showVirtualUsers(username, pass_word):
     cursor.execute("select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where usertokens.productname like '%virtual%';")
     all = cursor.fetchall()
     for i in all:
-        print(i)
+        print(i[0])
