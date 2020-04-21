@@ -18,7 +18,7 @@ def processing(username):
 	
 def execute(username):
 	incoming_data = processing(username)
-	print(incoming_data)
+	
 # TODO: insert all info parsed by json and archive info
 if __name__ == "__main__":
 	processing(sys.argv[1])
