@@ -1,15 +1,8 @@
 from datetime import datetime
 from create import *
 import psycopg2
-<<<<<<< HEAD
 import sys
-from create import * 
 
-def archive():
-	pass
-	# TODO: create archive data bases
-
-=======
 def archive(username):
 	conn = psycopg2.connect(user=username, database='odin')
 	cursor = conn.cursor()
@@ -19,7 +12,6 @@ def archive(username):
 		createTable("archive", attr, username)
 
 
->>>>>>> 56281b9f3b3eceb003bcc809a09816d60ca8b778
 def processing(username):
 	conn = psycopg2.connect(user=username, database='odin')
 	cursor = conn.cursor()
@@ -33,38 +25,28 @@ def processing(username):
 
 def execute(username):
 	incoming_data = processing(username)
-<<<<<<< HEAD
 	current_tables = showAllTablesODIN(False, username)
-	#print(incoming_data[0]['name'])
-	#print(current_tables)
-	if (incoming_data[0]['name'] in current_tables):
+	if (incoming_data[0]['name'].lower() in current_tables):
 		pass
-	elif (incoming_data[0]['name'] == 'Grouper'):
+	elif (incoming_data[0]['name'].lower() == 'grouper'):
 		var_dict = {}
 		max_attribute_len = 0
-		index = 0
-		for column in incoming_data:
-			if (len(column) > max_attribute_len):
-				max_attribute_len = len(column)
-			index++
-		max_data_index = incoming_data.index(max(incoming_data))
-		for column in incoming_data[max_data_index]:
-			if (type(incoming_data[max_data_index][column]) == type({})):
+		max_index = 0
+		for i in range(len(incoming_data)):
+			if (len(incoming_data[i]) > max_attribute_len):
+				max_attribute_len = len(incoming_data[i])
+				max_index = i
+	
+		for column in incoming_data[max_index]:
+			if (type(incoming_data[max_index][column]) == type({})):
 				var_dict['stemname'] = 'varchar'
 				var_dict['numstems'] = 'Int'
 			else:
 				var_dict[column] = 'varchar'
-		createTable(table_name, var_dict, username)
-		
+		createTable(incoming_data[0]['name'], var_dict, username)
 
-	
-	
-# TODO: insert all info parsed by json and archive info
-=======
-
-
->>>>>>> 56281b9f3b3eceb003bcc809a09816d60ca8b778
+	if (incoming_data[0]['name'].lower() in current_tables):
+		insertTable(incoming_data,username)	
 if __name__ == "__main__":
-
-	processing()
-	execute()
+	processing(sys.argv[1])
+	execute(sys.argv[1])
