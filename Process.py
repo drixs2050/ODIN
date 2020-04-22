@@ -26,25 +26,29 @@ def processing(username):
 def execute(username):
 	incoming_data = processing(username)
 	current_tables = showAllTablesODIN(False, username)
-	if (incoming_data[0]['name'].lower() == 'grouper' and not(incoming_data[0]['name'].lower() in current_tables)):
-		var_dict = {}
-		max_attribute_len = 0
-		max_index = 0
-		for i in range(len(incoming_data)):
-			if (len(incoming_data[i]) > max_attribute_len):
-				max_attribute_len = len(incoming_data[i])
-				max_index = i
-	
-		for column in incoming_data[max_index]:
-			if (type(incoming_data[max_index][column]) == type({})):
-				var_dict['stemname'] = 'varchar'
-				var_dict['numstems'] = 'Int'
-			else:
-				var_dict[column] = 'varchar'
-		createTable(incoming_data[0]['name'], var_dict, username)
+	#For creating tables
+	for json in incoming_data:
+		if (json['name'].lower() == 'grouper' and not (json['name'].lower() in current_tables)):		
+			var_dict = {}
+			max_attribute_len = 0
+			max_index = 0
+			for i in range(len(incoming_data)):
+				if (len(incoming_data[i]) > max_attribute_len):
+					max_attribute_len = len(incoming_data[i])
+					max_index = i
+			for column in incoming_data[max_index]:
+				if (type(incoming_data[max_index][column]) == type({})):
+					var_dict['stemname'] = 'varchar'
+					var_dict['numstems'] = 'Int'
+				else:
+					var_dict[column] = 'varchar'
+			createTable(incoming_data[0]['name'], var_dict, username)
 
-	if (incoming_data[0]['name'].lower() in current_tables):
-		insertTable(incoming_data,username)	
+	for json in incoming_data:	
+		if (json['name'].lower() in current_tables):
+			insertTableJson(json,username) 
+
+			
 if __name__ == "__main__":
 	processing(sys.argv[1])
 	execute(sys.argv[1])
