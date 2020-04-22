@@ -26,9 +26,7 @@ def processing(username):
 def execute(username):
 	incoming_data = processing(username)
 	current_tables = showAllTablesODIN(False, username)
-	if (incoming_data[0]['name'].lower() in current_tables):
-		pass
-	elif (incoming_data[0]['name'].lower() == 'grouper'):
+	if (incoming_data[0]['name'].lower() == 'grouper' and not(incoming_data[0]['name'].lower() in current_tables)):
 		var_dict = {}
 		max_attribute_len = 0
 		max_index = 0
