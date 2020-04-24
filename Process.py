@@ -3,6 +3,7 @@ from create import *
 import psycopg2
 import sys
 
+	
 def archive(username):
 	conn = psycopg2.connect(user=username, database='odin')
 	cursor = conn.cursor()
@@ -47,7 +48,8 @@ def execute(username):
 
 		if (json['name'].lower() in current_tables):
 			processed_time = datetime.now()
-			dt_string = processed_time.strftime("%d/%m/%Y %H:%M:%S.%f")	
+			dt_string = processed_time.strftime("%d/%m/%Y %H:%M:%S.%f")
+			print(showAttributes(username, json['name']))	
 			insertTableJson(json,username)
 			single_archive = {}
 			single_archive['name'] = 'archive'
