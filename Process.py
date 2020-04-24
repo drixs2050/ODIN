@@ -25,9 +25,10 @@ def processing(username):
 
 def execute(username):
 	incoming_data = processing(username)
-	current_tables = showAllTablesODIN(False, username)
 	#For creating tables
+	archive_lst = []
 	for json in incoming_data:
+		current_tables = showAllTablesODIN(False, username)
 		if (json['name'].lower() == 'grouper' and not (json['name'].lower() in current_tables)):		
 			var_dict = {}
 			max_attribute_len = 0
@@ -44,10 +45,20 @@ def execute(username):
 					var_dict[column] = 'varchar'
 			createTable(incoming_data[0]['name'], var_dict, username)
 
-	for json in incoming_data:	
 		if (json['name'].lower() in current_tables):
-			insertTableJson(json,username) 
-
+			processed_time = datetime.now()
+			dt_string = processed_time.strftime("%d/%m/%Y %H:%M:%S.%f")	
+			insertTableJson(json,username)
+			single_archive = {}
+			single_archive['name'] = 'archive'
+			single_archive['payload'] = json
+			single_archive['processed_on'] = dt_string
+			single_archive['processed_by'] = username
+			single_archive['archived_on'] = datetime.now().strftime("%d/%m/%Y %H:%M:%S.%f")
+			archive_lst.append(single_archive)
+	return archive_lst		
+			 
+			
 			
 if __name__ == "__main__":
 	processing(sys.argv[1])
