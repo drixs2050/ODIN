@@ -8,13 +8,14 @@ def archive(username, infolist):
 	cursor = conn.cursor()
 	cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');")
 	if cursor.fetchone()[0] == False:
-		attr = {"payload": "json", "processed_by": "varchar", "processed_on": "varchar", "archived_on": "varchar"}
+		attr = {"payload": "json", "processed_by": "varchar", "processed_on": "datetime", "archived_on": "datetime"}
 		createTable("archive", attr, username)
 	for i in infolist:
 		processed_time = datetime.now()
-		dt_string = processed_time.strftime("'%d/%m/%Y %H:%M:%S.%f'")
+		dt_string = processed_time.strftime("""%d/%m/%Y %H:%M:%S.%f""")	
 		i['archived_on'] = dt_string
 		i['processed_by'] = username
+		print(i)
 		insertTableJson(i, username)
 
 
@@ -53,11 +54,12 @@ def execute(username):
 
 		if (json['name'].lower() in current_tables):
 			processed_time = datetime.now()
-			dt_string = processed_time.strftime("'%d/%m/%Y %H:%M:%S.%f'")
+			dt_string = processed_time.strftime("""%d/%m/%Y %H:%M:%S.%f""")
 			#print(showAllAttributes(username, json['name']))	
 			insertTableJson(json,username)
 			single_archive = {'name': 'archive', 'payload': json, 'processed_on': dt_string}
 			archive_lst.append(single_archive)
+	print(archive_lst)
 	archive(username, archive_lst)
 			
 			
