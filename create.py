@@ -357,18 +357,19 @@ def insertTableJsonQuery(json):
         columnNotDict = []
         valueNotDict = []
         for column_name in json:
-            if (column_name != "name"): 
+            if (column_name != "name"):
                 if (column_name not in columnNotDict):
                     columnNotDict.append(column_name)
                 if (type(json[column_name]) == dict):
                     str_dict = str(json[column_name])
+                    str_dict = str_dict.replace("'", "")
                     valueNotDict.append(str_dict)
                 else:
                     valueNotDict.append(json[column_name])
+        value = value + str(tuple(valueNotDict)) + ','
         column = str(tuple(columnNotDict))
         column = column.replace("'", "")
-        value = str(tuple(valueNotDict))
-        value = value.replace("'", "")
+        value = value.strip(", ")
         table_name = json["name"]
         insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
         return insert_query
