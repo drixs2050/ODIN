@@ -104,6 +104,14 @@ ORDER BY 1,2) a"""
             if (print_boolean == False):
                 return table_lst
 
+def showAllAttributes(username, table_name):
+    conn = getConnection(username)
+    cursor = conn.cursor()
+    query = cursor.execute("SELECT * FROM {};".format(table_name))
+    for row in cursor.fetchall():
+            cursor.close()
+            conn.close()
+            return row
 
 def addComment(table_name, comment, username):
     try:
@@ -135,17 +143,14 @@ def commitQuery(query, output, username):
         cursor = conn.cursor()
         cursor.execute("SELECT version();")
         record = cursor.fetchone()
-        print("You are connected to - ", record, "\n")
         cursor.execute(query)
         conn.commit()
-        print(output)
     except (Exception, psycopg2.Error) as error:
         print("Error while connecting to PostgreSQL", error)
     finally:
         if (conn):
             cursor.close()
             conn.close()
-            print("PostgreSQL connection is closed")
 
 
 """
@@ -321,19 +326,52 @@ def insertTableJsonQuery(json):
     """
     This is a helper function that returns the INSERT TABLE statement
     """
-    for column_name in json:
-        if (type(json[column_name]) == type({})):
-            statement = ''
-            for stem in json[column_name]:
-                statement = statement + '(' + stem + ', '
-                statement = statement + str(json[column_name][stem]) + ', '
-                statement = statement + json["run_date"] + '),'
-            statement = statement.strip(',')
-            insert_query = "INSERT INTO {}(stem_name, numstems, run_date) VALUES {}".format(json["service"], statement)
-            return insert_query
-    return "There is nothing to insert"
-
-
+    column = ""
+    value = ""
+    if (json["name"].lower() == 'grouper'):
+        columnNotDict = []
+        valueNotDict = []
+        for column_name in json:
+            if (type(json[column_name]) != dict):
+                if (column_name not in columnNotDict):
+                    columnNotDict.append(column_name)
+                valueNotDict.append(json[column_name])
+        
+        for column_name in json:
+            if (type(json[column_name]) == dict):
+                columnDict = ['stemname', 'numstems']
+                for stem in json[column_name]:
+                    combinedValue = valueNotDict[:]
+                    combinedValue.append(stem)
+                    combinedValue.append(json[column_name][stem])
+                    value = value + str(tuple(combinedValue)) + ','
+                            
+        columnNotDict += columnDict
+        column = str(tuple(columnNotDict))
+        column = column.replace("'", "")
+        value = value.strip (", ")
+        table_name = json["name"]
+        insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
+        return insert_query
+    elif (json["name"].lower() == "archive"):
+        columnNotDict = []
+        valueNotDict = []
+        for column_name in json:
+            if (column_name != "name"): 
+                if (column_name not in columnNotDict):
+                    columnNotDict.append(column_name)
+                if (type(json[column_name]) == dict):
+                    str_dict = str(json[column_name])
+                    valueNotDict.append(str_dict)
+                else:
+                    valueNotDict.append(json[column_name])
+        column = str(tuple(columnNotDict))
+        column = column.replace("'", "")
+        value = str(tuple(valueNotDict))
+        value = value.replace("'", "")
+        table_name = json["name"]
+        insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
+        return insert_query
 def insertTableQuery(json):
     """
     This is a helper function that returns the INSERT TABLE statement
@@ -346,14 +384,14 @@ def insertTableQuery(json):
         for column_name in obj:
             if (type(obj[column_name]) != type({})):
                 if (column_name not in columnNotDict):
-                    columnNotDict.append(column_name.encode('ascii'))
-                valueNotDict.append(obj[column_name].encode('ascii'))
+                    columnNotDict.append(column_name)
+                valueNotDict.append(obj[column_name])
         for column_name in obj:
             if (type(obj[column_name]) == type({})):
                 columnDict = ['stemname', 'numstems']
                 for stem in obj[column_name]:
                     combinedValue = valueNotDict[:]
-                    combinedValue.append(stem.encode('ascii'))
+                    combinedValue.append(stem)
                     combinedValue.append(obj[column_name][stem])
 
                     value = value + str(tuple(combinedValue)) + ', '
@@ -382,10 +420,12 @@ def updateTableQuery(table_name, attr_dict, condition=None):
     return new_query
 
 
-def alterTableQuery(table_name, column_name, column_type):
+def alterTableQuery(json):
     """
     This is a helper function that returns the ALTER statement
     """
+    table_name = json['name']
+    
     alter_query = "ALTER TABLE {} ADD {} {};".format(table_name, column_name, column_type)
     return alter_query
 
