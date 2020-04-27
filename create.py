@@ -107,8 +107,7 @@ ORDER BY 1,2) a"""
 def insertPayload(username):
     conn = getConnection(username)
     cursor = conn.cursor()
-    query = cursor.execute("INSERT INTO archive (payload) SELECT payload FROM incoming;")
-    print(query)
+    query = "INSERT INTO archive (payload) SELECT payload FROM incoming;"
     cursor.execute(query)
     cursor.close()
     conn.close()
