@@ -11,9 +11,9 @@ def archive(username, infolist):
 		attr = {'payload': 'varchar', 'processed_by': 'varchar', 'processed_on': 'timestamp', 'archived_on': 'timestamp'}
 		createTable('archive', attr, username)
 	for i in infolist:
-		processed_time = datetime.now()
-		dt_string = processed_time.strftime("""%d/%m/%Y %H:%M:%S.%f""")	
-		i['archived_on'] = dt_string
+		processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
+		
+		i['archived_on'] = processed_time
 		i['processed_by'] = username
 		insertTableJson(i, username)
 
@@ -24,7 +24,7 @@ def processing(username):
 	cursor.execute("SELECT payload from incoming;")
 	incoming_data = []
 	for row in cursor.fetchall():
-		incoming_data.append(row[0])
+		incoming_data.append(row)
 	conn.close()
 	return incoming_data
 
@@ -35,7 +35,7 @@ def execute(username):
 	archive_lst = []
 	for json in incoming_data:
 		current_tables = showAllTablesODIN(False, username)
-		if json['name'].lower() == 'grouper' and not (json['name'].lower() in current_tables):
+		if json[0]['name'].lower() == 'grouper' and not (json[0]['name'].lower() in current_tables):
 			var_dict = {}
 			max_attribute_len = 0
 			max_index = 0
@@ -44,21 +44,21 @@ def execute(username):
 					max_attribute_len = len(incoming_data[i])
 					max_index = i
 			for column in incoming_data[max_index]:
-				if type(incoming_data[max_index][column]) == type({}):
+				print(incoming_data[max_index][0][column])
+				break
+				if type(incoming_data[max_index][0][column]) == type({}):
 					var_dict['stemname'] = 'varchar'
 					var_dict['numstems'] = 'Int'
 				else:
 					var_dict[column] = 'varchar'
-			createTable(incoming_data[0]['name'], var_dict, username)
-
-		if (json['name'].lower() in current_tables):
-			processed_time = datetime.now()
-			dt_string = processed_time.strftime("""%d/%m/%Y %H:%M:%S.%f""")
+			createTable(json[0]['name'], var_dict, username)
+		break
+		if (json[0]['name'].lower() in current_tables):
+			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			#print(showAllAttributes(username, json['name']))	
-			insertTableJson(json,username)
-			single_archive = {'name': 'archive', 'payload': 'varchar', 'processed_on': dt_string}
+			insertTableJson(json[0],username)
+			single_archive = {'name': 'archive', 'payload': json, 'processed_on': processed_time}
 			archive_lst.append(single_archive)
-	print(archive_lst)
 	archive(username, archive_lst)
 			
 			
