@@ -104,13 +104,6 @@ ORDER BY 1,2) a"""
             if (print_boolean == False):
                 return table_lst
 
-def insertPayload(username):
-    conn = getConnection(username)
-    cursor = conn.cursor()
-    query = "INSERT INTO archive (payload) SELECT payload FROM incoming;"
-    cursor.execute(query)
-    cursor.close()
-    conn.close()
 
 def showAllAttributes(username, table_name):
     conn = getConnection(username)
