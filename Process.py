@@ -12,11 +12,11 @@ def archive(username, infolist):
 		createTable('archive', attr, username)
 	for i in infolist:
 		processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-		
+		print(i['payload'])
 		i['archived_on'] = processed_time
 		i['processed_by'] = username
 		insertTableJson(i, username)
-		insertPayload(username)
+		#insertPayload(username)
 
 def processing(username):
 	conn = psycopg2.connect(user=username, database='odin')
@@ -54,7 +54,7 @@ def execute(username):
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			#print(showAllAttributes(username, json['name']))
 			insertTableJson(json,username)
-			single_archive = {'name': 'archive', 'processed_on': processed_time}
+			single_archive = {'name': 'archive','payload': str(json),'processed_on': processed_time}
 			archive_lst.append(single_archive)
 	archive(username, archive_lst)
 			
