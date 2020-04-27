@@ -11,9 +11,12 @@ def getConnection(username):
 def getSQLConnection(username, pass_word):
     new_conn = mysql.connector.connect(user=username, password=pass_word, database='shibboleth')
     return new_conn
+
+
 def getEtokenConnection(username, pass_word):
 	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'etoken')
 	return new_conn
+
 
 def showSQLAttribute(username, pass_word):
     conn = getSQLConnection(username, pass_word)
@@ -28,6 +31,16 @@ def showSQLAttribute(username, pass_word):
     conn.close()
     return i
 
+
+def showPSQLAttribute(table, username):
+    conn = getConnection(username)
+    cursor = conn.cursor()
+    cursor.execute("SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{}';".format(table))
+    list = []
+    for i in cursor.fetchall():
+        list.append(i[0])
+    conn.close()
+    return list
 
 def selectOneAttribute(username, pass_word, index):
     conn = getSQLConnection(username, pass_word)
