@@ -104,6 +104,15 @@ ORDER BY 1,2) a"""
             if (print_boolean == False):
                 return table_lst
 
+def insertPayload(username):
+    conn = getConnection(username)
+    cursor = conn.cursor()
+    query = cursor.execute("INSERT INTO archive (payload) SELECT payload FROM incoming;")
+    print(query)
+    cursor.execute(query)
+    cursor.close()
+    conn.close()
+
 def showAllAttributes(username, table_name):
     conn = getConnection(username)
     cursor = conn.cursor()
@@ -321,7 +330,7 @@ def createTableQuery(table_name, attr_dict):
     new_query = "CREATE TABLE {} ({});".format(table_name, data_statement)
     return new_query
 
-
+    
 def insertTableJsonQuery(json):
     """
     This is a helper function that returns the INSERT TABLE statement
@@ -360,7 +369,7 @@ def insertTableJsonQuery(json):
             if (column_name != "name"):
                 if (column_name not in columnNotDict):
                     columnNotDict.append(column_name)
-                if (type(json[column_name]) == dict):
+                if (type(json[column_name]) == tuple):
                     str_dict = str(json[column_name])
                     str_dict = str_dict.replace("'", "")
                     valueNotDict.append(str_dict)

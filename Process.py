@@ -8,7 +8,7 @@ def archive(username, infolist):
 	cursor = conn.cursor()
 	cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');")
 	if cursor.fetchone()[0] == False:
-		attr = {'payload': 'varchar', 'processed_by': 'varchar', 'processed_on': 'timestamp', 'archived_on': 'timestamp'}
+		attr = {'payload': 'json', 'processed_by': 'varchar', 'processed_on': 'timestamp', 'archived_on': 'timestamp'}
 		createTable('archive', attr, username)
 	for i in infolist:
 		processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -16,7 +16,7 @@ def archive(username, infolist):
 		i['archived_on'] = processed_time
 		i['processed_by'] = username
 		insertTableJson(i, username)
-
+		insertPayload(username)
 
 def processing(username):
 	conn = psycopg2.connect(user=username, database='odin')
@@ -24,16 +24,13 @@ def processing(username):
 	cursor.execute("SELECT payload from incoming;")
 	incoming_data = []
 	for row in cursor.fetchall():
-		incoming_data.append(row)
+		incoming_data.append(row[0])
 	conn.close()
 	return incoming_data
 
 
 def execute(username):
-	raw_data = processing(username)
-	incoming_data = []
-	for data in raw_data:
-		incoming_data.append(data[0])
+	incoming_data = processing(username)
 	#For creating tables
 	archive_lst = []
 	for json in incoming_data:
@@ -53,16 +50,12 @@ def execute(username):
 				else:
 					var_dict[column] = 'varchar'
 			createTable(json['name'], var_dict, username)
-	for raw_json in raw_data:	
-		if (raw_json[0]['name'].lower() in current_tables):
+		if (json['name'].lower() in current_tables):
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-			#print(showAllAttributes(username, json['name']))	
-			insertTableJson(raw_json[0],username)
-			single_archive = {'name': 'archive', 'payload': raw_json, 'processed_on': processed_time}
-			print(single_archive)
-			break
+			#print(showAllAttributes(username, json['name']))
+			insertTableJson(json,username)
+			single_archive = {'name': 'archive', 'processed_on': processed_time}
 			archive_lst.append(single_archive)
-	pass
 	archive(username, archive_lst)
 			
 			
