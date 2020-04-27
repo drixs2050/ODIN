@@ -54,7 +54,7 @@ def execute(username):
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			#print(showAllAttributes(username, json['name']))
 			insertTableJson(json,username)
-			single_archive = {'name': 'archive','payload': str(json),'processed_on': processed_time}
+			single_archive = {'name': 'archive', 'payload': "'" + str(json)[1:-1] + "'", 'processed_on': processed_time}
 			archive_lst.append(single_archive)
 	archive(username, archive_lst)
 			
