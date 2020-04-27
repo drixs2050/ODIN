@@ -30,12 +30,15 @@ def processing(username):
 
 
 def execute(username):
-	incoming_data = processing(username)
+	raw_data = processing(username)
+	incoming_data = []
+	for data in raw_data:
+		incoming_data.append(data[0])
 	#For creating tables
 	archive_lst = []
 	for json in incoming_data:
 		current_tables = showAllTablesODIN(False, username)
-		if json[0]['name'].lower() == 'grouper' and not (json[0]['name'].lower() in current_tables):
+		if json['name'].lower() == 'grouper' and not (json['name'].lower() in current_tables):
 			var_dict = {}
 			max_attribute_len = 0
 			max_index = 0
@@ -44,21 +47,22 @@ def execute(username):
 					max_attribute_len = len(incoming_data[i])
 					max_index = i
 			for column in incoming_data[max_index]:
-				print(incoming_data[max_index][0][column])
-				break
-				if type(incoming_data[max_index][0][column]) == type({}):
+				if type(incoming_data[max_index][column]) == type({}):
 					var_dict['stemname'] = 'varchar'
 					var_dict['numstems'] = 'Int'
 				else:
 					var_dict[column] = 'varchar'
-			createTable(json[0]['name'], var_dict, username)
-		break
-		if (json[0]['name'].lower() in current_tables):
+			createTable(json['name'], var_dict, username)
+	for raw_json in raw_data:	
+		if (raw_json[0]['name'].lower() in current_tables):
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			#print(showAllAttributes(username, json['name']))	
-			insertTableJson(json[0],username)
-			single_archive = {'name': 'archive', 'payload': json, 'processed_on': processed_time}
+			insertTableJson(raw_json[0],username)
+			single_archive = {'name': 'archive', 'payload': raw_json, 'processed_on': processed_time}
+			print(single_archive)
+			break
 			archive_lst.append(single_archive)
+	pass
 	archive(username, archive_lst)
 			
 			
