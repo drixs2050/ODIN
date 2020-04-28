@@ -16,7 +16,6 @@ def archive(username, infolist):
 		i['archived_on'] = processed_time
 		i['processed_by'] = username
 		insertTableJson(i, username)
-		#insertPayload(username)
 
 def processing(username):
 	conn = psycopg2.connect(user=username, database='odin')
@@ -37,8 +36,9 @@ def execute(username):
 	#For creating tables
 	archive_lst = []
 	for data in incoming_data:
+		table_name = data['name'].lower()
 		current_tables = showAllTablesODIN(False, username)
-		if data['name'].lower() == 'grouper' and not (data['name'].lower() in current_tables):
+		if table_name == 'grouper' and not (table_name in current_tables):
 			var_dict = {}
 			max_attribute_len = 0
 			max_index = 0
@@ -52,14 +52,16 @@ def execute(username):
 					var_dict['numstems'] = 'Int'
 				else:
 					var_dict[column] = 'varchar'
-			createTable(data['name'], var_dict, username)
-		if (data['name'].lower() in current_tables):
+			createTable(table_name, var_dict, username)
+		if (table_name in current_tables):
+			attribute_lst = showPSQLAttribute(table_name, username)
+			for keys in data:
+				if keys not in attribute_lst:
+					alterTable(data['name'], keys, 'varchar', username)		
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-			#print(showAllAttributes(username, json['name']))
 			insertTableJson(data,username)
 			payload_data = json.dumps(data)
 			single_archive = {'name': 'archive', 'payload': payload_data, 'processed_on': processed_time}
-			
 			archive_lst.append(single_archive)
 	archive(username, archive_lst)
 			
