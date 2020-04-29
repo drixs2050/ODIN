@@ -9,13 +9,21 @@ def archive(username, infolist):
 	cursor = conn.cursor()
 	cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');")
 	if cursor.fetchone()[0] == False:
-		attr = {'payload': 'json', 'processed_by': 'varchar', 'processed_on': 'timestamp', 'archived_on': 'timestamp'}
+		attr = {'payload': 'json', 'processed_by': 'VARCHAR DEFAULT CURRENT_USER', 'processed_on': 'timestamp', 'archived_on': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'}
 		createTable('archive', attr, username)
 	for i in infolist:
 		processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 		i['archived_on'] = processed_time
 		i['processed_by'] = username
 		insertTableJson(i, username)
+
+def createIncomingTrigger(username):
+	conn = psycopg2.connect(user=username, database='odin')
+	cursor = conn.cursor()
+	cursor.execute("""CREATE OR REPLACE FUNCTION incoming_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO archive (payload, processed_on) VALUES (OLD.payload, OLD.processed_on); RETURN OLD; END; $$ LANGUAGE 'plpgsql';""")
+	cursor.execute("""CREATE TRIGGER t_incoming_delete BEFORE DELETE ON incoming FOR EACH ROW EXECUTE PROCEDURE incoming_delete();""")
+	conn.commit()
+	conn.close()
 
 def processing(username):
 	conn = psycopg2.connect(user=username, database='odin')
@@ -60,7 +68,7 @@ def execute(username):
 					alterTable(data['name'], keys, 'varchar', username)		
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			insertTableJson(data,username)
-			payload_data = json.dumps(data)
+			payload_data = json.dumps(data, indent=4, sort_keys=True)
 			single_archive = {'name': 'archive', 'payload': payload_data, 'processed_on': processed_time}
 			archive_lst.append(single_archive)
 	archive(username, archive_lst)
@@ -69,3 +77,4 @@ def execute(username):
 if __name__ == "__main__":
 	processing(sys.argv[1])
 	execute(sys.argv[1])
+	createIncomingTrigger(sys.argv[1])
