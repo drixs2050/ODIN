@@ -109,6 +109,7 @@ def execute(username):
 					alterTable(data['name'], keys, 'varchar', username)		
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			insertTableJson(data,username)
+			
 			#payload_data = json.dumps(data, sort_keys=True)
 			#single_archive = {'name': 'archive', 'payload': payload_data, 'processed_on': processed_time}
 			#archive_lst.append(single_archive)
@@ -123,3 +124,4 @@ if __name__ == "__main__":
 	createArchiveTrigger(sys.argv[1])
 	if (len(sys.argv[1:]) > 1):
 		moveData(sys.argv[1], 'archive')
+		moveData(sys.argv[1], 'grouper')
