@@ -4,26 +4,70 @@ import psycopg2
 import sys
 import json
 
-def archive(username, infolist):
+def archive(username):
 	conn = psycopg2.connect(user=username, database='odin')
 	cursor = conn.cursor()
 	cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');")
 	if cursor.fetchone()[0] == False:
 		attr = {'payload': 'json', 'processed_by': 'VARCHAR DEFAULT CURRENT_USER', 'processed_on': 'timestamp', 'archived_on': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'}
 		createTable('archive', attr, username)
-	for i in infolist:
-		processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-		i['archived_on'] = processed_time
-		i['processed_by'] = username
-		insertTableJson(i, username)
-
-def createIncomingTrigger(username):
+	moveData(username, 'incoming')
+	
+	#for i in infolist:
+	#	processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
+	#	i['archived_on'] = processed_time
+	#	i['processed_by'] = username
+	#	insertTableJson(i, username)
+def moveData(username, tablename):
 	conn = psycopg2.connect(user=username, database='odin')
 	cursor = conn.cursor()
-	cursor.execute("""CREATE OR REPLACE FUNCTION incoming_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO archive (payload, processed_on) VALUES (OLD.payload, OLD.processed_on); RETURN OLD; END; $$ LANGUAGE 'plpgsql';""")
-	cursor.execute("""CREATE TRIGGER t_incoming_delete BEFORE DELETE ON incoming FOR EACH ROW EXECUTE PROCEDURE incoming_delete();""")
+	cursor.execute("DELETE FROM {};".format(tablename))
 	conn.commit()
 	conn.close()
+
+		
+
+def checkIncomingTrigger(username):
+	conn = psycopg2.connect(user=username, database='odin')
+	cursor = conn.cursor()
+	cursor.execute("""SELECT tgname from pg_trigger where not tgisinternal AND tgname='t_incoming_delete';""")
+	trigger_status = None
+	for row in cursor.fetchall():
+		trigger_status = row[0]
+	if trigger_status == None:
+		return False
+	return True
+	conn.close()
+
+def checkArchiveTrigger(username):
+	conn = psycopg2.connect(user=username, database='odin')
+	cursor = conn.cursor()
+	cursor.execute("""SELECT tgname from pg_trigger where not tgisinternal AND tgname='t_archive_delete';""")
+	trigger_status = None
+	for row in cursor.fetchall():
+		trigger_status = row[0]
+	if trigger_status == None:
+		return False
+	return True
+	conn.close()	 
+
+def createArchiveTrigger(username):
+	if (checkArchiveTrigger(username) == False):
+		conn = psycopg2.connect(user=username, database='odin')
+		cursor = conn.cursor()
+		cursor.execute("""CREATE OR REPLACE FUNCTION archive_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO incoming (payload, processed_on) VALUES (OLD.payload, OLD.processed_on); RETURN OLD; END; $$ LANGUAGE 'plpgsql';""")
+		cursor.execute("""CREATE TRIGGER t_archive_delete BEFORE DELETE ON archive FOR EACH ROW EXECUTE PROCEDURE archive_delete();""")
+		conn.commit()
+		conn.close()
+
+def createIncomingTrigger(username):
+	if (checkIncomingTrigger(username) == False):
+		conn = psycopg2.connect(user=username, database='odin')
+		cursor = conn.cursor()
+		cursor.execute("""CREATE OR REPLACE FUNCTION incoming_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO archive (payload, processed_on) VALUES (OLD.payload, OLD.processed_on); RETURN OLD; END; $$ LANGUAGE 'plpgsql';""")
+		cursor.execute("""CREATE TRIGGER t_incoming_delete BEFORE DELETE ON incoming FOR EACH ROW EXECUTE PROCEDURE incoming_delete();""")
+		conn.commit()
+		conn.close()
 
 def processing(username):
 	conn = psycopg2.connect(user=username, database='odin')
@@ -31,18 +75,15 @@ def processing(username):
 	cursor.execute("SELECT payload from incoming;")
 	incoming_data = []
 	for row in cursor.fetchall():
-		incoming_data.append(row)
+		incoming_data.append(row[0])
 	conn.close()
 	return incoming_data
 
 
 def execute(username):
-	raw_data = processing(username)
-	incoming_data = []
-	for data in raw_data:
-		incoming_data.append(data[0])
+	incoming_data = processing(username)
 	#For creating tables
-	archive_lst = []
+	#archive_lst = []
 	for data in incoming_data:
 		table_name = data['name'].lower()
 		current_tables = showAllTablesODIN(False, username)
@@ -68,13 +109,17 @@ def execute(username):
 					alterTable(data['name'], keys, 'varchar', username)		
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			insertTableJson(data,username)
-			payload_data = json.dumps(data, indent=4, sort_keys=True)
-			single_archive = {'name': 'archive', 'payload': payload_data, 'processed_on': processed_time}
-			archive_lst.append(single_archive)
-	archive(username, archive_lst)
+			#payload_data = json.dumps(data, sort_keys=True)
+			#single_archive = {'name': 'archive', 'payload': payload_data, 'processed_on': processed_time}
+			#archive_lst.append(single_archive)
+	if (incoming_data != []):
+		archive(username)
 			
 			
 if __name__ == "__main__":
 	processing(sys.argv[1])
 	execute(sys.argv[1])
 	createIncomingTrigger(sys.argv[1])
+	createArchiveTrigger(sys.argv[1])
+	if (len(sys.argv[1:]) > 1):
+		moveData(sys.argv[1], 'archive')
