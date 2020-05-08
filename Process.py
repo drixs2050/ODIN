@@ -62,7 +62,17 @@ def execute(username):
 			
 			archive_lst.append(single_archive)
 	archive(username, archive_lst)
-			
+
+def etokenJsonify(username, pa):
+	payload = {}
+	virtual = showVirtualUsers(username, pa)
+	#normal =
+	#inventory =
+	#inOneWeek =
+	#inOneMonth =
+	#inTwoMonth =
+	#inThreeMonth =
+	#count 2FA =
 			
 if __name__ == "__main__":
 	processing(sys.argv[1])
