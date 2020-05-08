@@ -189,6 +189,7 @@ def createTable(table_name, var_dict, username):
     or error statement if syntax error.
     """
     commitQuery(createTableQuery(table_name, var_dict), "Table created successfully in PostgreSQL", username)
+    commitQuery("Alter table {} OWNER TO odin;".format(table_name), "Table created successfully in PostgreSQL", username)
 
 
 def insertTableJson(json, username):
@@ -435,11 +436,10 @@ def updateTableQuery(table_name, attr_dict, condition=None):
     return new_query
 
 
-def alterTableQuery(json):
+def alterTableQuery(table_name, column_name, column_type):
     """
     This is a helper function that returns the ALTER statement
     """
-    table_name = json['name']
     
     alter_query = "ALTER TABLE {} ADD {} {};".format(table_name, column_name, column_type)
     return alter_query
