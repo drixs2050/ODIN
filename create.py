@@ -477,13 +477,35 @@ def showVirtualUsers(username, pass_word):
     cursor = conn.cursor()
     cursor.execute("select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where usertokens.productname like '%virtual%';")
     all = cursor.fetchall()
+    virtual = []
     for i in all:
+        virtual.append(i[0])
         print(i[0])
+    return virtual
 
 def showExpiring(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute("select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + 14;")
     all = cursor.fetchall()
+    expiring = []
     for i in all:
+        expiring.append(i[0])
         print(i[0])
+    return expiring
+
+def showExpiringIn(username, pass_word, num_month):
+    conn = getEtokenConnection(username, pass_word)
+    cursor = conn.cursor()
+    if(num_month < 0.5):
+        cursor.execute(
+            "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + 14;")
+    else:
+        cursor.execute(
+            "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + {} and expirationdate < curdate() + {};".format(str(num_month * 30), str(num_month - 1 * 30)))
+    all = cursor.fetchall()
+    expiring = []
+    for i in all:
+        expiring.append(i[0])
+        print(i[0])
+    return expiring
