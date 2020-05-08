@@ -26,7 +26,6 @@ def moveData(username, tablename):
 	conn.close()
 
 		
-
 def checkIncomingTrigger(username):
 	conn = psycopg2.connect(user=username, database='odin')
 	cursor = conn.cursor()
@@ -66,6 +65,7 @@ def createIncomingTrigger(username):
 		cursor = conn.cursor()
 		cursor.execute("""CREATE OR REPLACE FUNCTION incoming_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO archive (payload, processed_on) VALUES (OLD.payload, OLD.processed_on); RETURN OLD; END; $$ LANGUAGE 'plpgsql';""")
 		cursor.execute("""CREATE TRIGGER t_incoming_delete BEFORE DELETE ON incoming FOR EACH ROW EXECUTE PROCEDURE incoming_delete();""")
+		
 		conn.commit()
 		conn.close()
 
