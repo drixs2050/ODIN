@@ -17,11 +17,6 @@ def archive(username):
 	moveData(username, 'incoming')
 
 
-# for i in infolist:
-#	processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-#	i['archived_on'] = processed_time
-#	i['processed_by'] = username
-#	insertTableJson(i, username)
 def moveData(username, tablename):
 	conn = psycopg2.connect(user=username, database='odin')
 	cursor = conn.cursor()
@@ -93,8 +88,6 @@ def processing(username):
 
 def execute(username):
 	incoming_data = processing(username)
-	# For creating tables
-	# archive_lst = []
 	for data in incoming_data:
 		table_name = data['name'].lower()
 		current_tables = showAllTablesODIN(False, username)
@@ -120,23 +113,19 @@ def execute(username):
 					alterTable(data['name'], keys, 'varchar', username)
 			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			insertTableJson(data, username)
-
-	# payload_data = json.dumps(data, sort_keys=True)
-	# single_archive = {'name': 'archive', 'payload': payload_data, 'processed_on': processed_time}
-	# archive_lst.append(single_archive)
 	if (incoming_data != []):
 		archive(username)
 
-	def etokenJsonify(username, pa):
-		payload = {}
-		virtual = countvirtual(username, pa)
-		normal = countNormal(username, pa)
-		# inventory =
-		# inOneWeek =
-		# inOneMonth =
-		# inTwoMonth =
-		# inThreeMonth =
-		# count 2FA =
+def etokenJsonify(username, pa):
+	payload = {}
+	virtual = countvirtual(username, pa)
+	normal = countNormal(username, pa)
+	# inventory =
+	# inOneWeek =
+	# inOneMonth =
+	# inTwoMonth =
+	# inThreeMonth =
+	# count 2FA =
 
 if __name__ == "__main__":
 	processing(sys.argv[1])
