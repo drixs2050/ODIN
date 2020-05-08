@@ -66,7 +66,7 @@ def execute(username):
 def etokenJsonify(username, pa):
 	payload = {}
 	virtual = showVirtualUsers(username, pa)
-	#normal =
+	normal = showNormalUsers
 	#inventory =
 	#inOneWeek =
 	#inOneMonth =
