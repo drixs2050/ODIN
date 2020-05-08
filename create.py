@@ -14,8 +14,8 @@ def getSQLConnection(username, pass_word):
 
 
 def getEtokenConnection(username, pass_word):
-	new_conn = mysql.connector.connect(user=username, password=pass_word, database = 'etoken')
-	return new_conn
+    new_conn = mysql.connector.connect(user=username, password=pass_word, database='etoken')
+    return new_conn
 
 
 def showSQLAttribute(username, pass_word):
@@ -41,6 +41,7 @@ def showPSQLAttribute(table, username):
         list.append(i[0])
     conn.close()
     return list
+
 
 def selectOneAttribute(username, pass_word, index):
     conn = getSQLConnection(username, pass_word)
@@ -123,9 +124,10 @@ def showAllAttributes(username, table_name):
     cursor = conn.cursor()
     query = cursor.execute("SELECT * FROM {};".format(table_name))
     for row in cursor.fetchall():
-            cursor.close()
-            conn.close()
-            return row
+        cursor.close()
+        conn.close()
+        return row
+
 
 def addComment(table_name, comment, username):
     try:
@@ -189,7 +191,8 @@ def createTable(table_name, var_dict, username):
     or error statement if syntax error.
     """
     commitQuery(createTableQuery(table_name, var_dict), "Table created successfully in PostgreSQL", username)
-    commitQuery("Alter table {} OWNER TO odin;".format(table_name), "Table created successfully in PostgreSQL", username)
+    commitQuery("Alter table {} OWNER TO odin;".format(table_name), "Table created successfully in PostgreSQL",
+                username)
 
 
 def insertTableJson(json, username):
@@ -336,7 +339,7 @@ def createTableQuery(table_name, attr_dict):
     new_query = "CREATE TABLE {} ({});".format(table_name, data_statement)
     return new_query
 
-    
+
 def insertTableJsonQuery(json):
     """
     This is a helper function that returns the INSERT TABLE statement
@@ -351,7 +354,7 @@ def insertTableJsonQuery(json):
                 if (column_name not in columnNotDict):
                     columnNotDict.append(column_name)
                 valueNotDict.append(json[column_name])
-        
+
         for column_name in json:
             if (type(json[column_name]) == dict):
                 columnDict = ['stemname', 'numstems']
@@ -360,11 +363,11 @@ def insertTableJsonQuery(json):
                     combinedValue.append(stem)
                     combinedValue.append(json[column_name][stem])
                     value = value + str(tuple(combinedValue)) + ','
-                            
+
         columnNotDict += columnDict
         column = str(tuple(columnNotDict))
         column = column.replace("'", "")
-        value = value.strip (", ")
+        value = value.strip(", ")
         table_name = json["name"]
         insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
         return insert_query
@@ -388,6 +391,8 @@ def insertTableJsonQuery(json):
         table_name = json["name"]
         insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
         return insert_query
+
+
 def insertTableQuery(json):
     """
     This is a helper function that returns the INSERT TABLE statement
@@ -440,9 +445,10 @@ def alterTableQuery(table_name, column_name, column_type):
     """
     This is a helper function that returns the ALTER statement
     """
-    
+
     alter_query = "ALTER TABLE {} ADD {} {};".format(table_name, column_name, column_type)
     return alter_query
+
 
 def countall(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
@@ -450,17 +456,20 @@ def countall(username, pass_word):
     cursor.execute("select count(*) from usertokens;")
     print(cursor.fetchone()[0])
 
+
 def countvirtual(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute("select count(*) from usertokens where productname like '%virtual%';")
     print(cursor.fetchone()[0])
 
+
 def countServiceProvider(username, pass_word):
     conn = getSQLConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute("select count(*) from splist;")
     print(cursor.fetchone()[0])
+
 
 def countNormal(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
@@ -472,27 +481,26 @@ def countNormal(username, pass_word):
     normal = int(all) - int(virtual)
     print(normal)
 
+
 def showVirtualUsers(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
-    cursor.execute("select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where usertokens.productname like '%virtual%';")
+    cursor.execute(
+        "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where usertokens.productname like '%virtual%';")
     all = cursor.fetchall()
-    virtual = []
     for i in all:
-        virtual.append(i[0])
         print(i[0])
-    return virtual
+
 
 def showExpiring(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
-    cursor.execute("select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + 14;")
+    cursor.execute(
+        "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + 14;")
     all = cursor.fetchall()
-    expiring = []
     for i in all:
-        expiring.append(i[0])
         print(i[0])
-    return expiring
+
 
 def showExpiringIn(username, pass_word, num_month):
     conn = getEtokenConnection(username, pass_word)
