@@ -111,7 +111,7 @@ def execute(username):
 			for keys in data:
 				if keys not in attribute_lst:
 					alterTable(data['name'], keys, 'varchar', username)
-			processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
+			#processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
 			insertTableJson(data, username)
 	if (incoming_data != []):
 		archive(username)
@@ -120,6 +120,9 @@ def etokenJsonify(username, pa):
 	payload = {}
 	virtual = countvirtual(username, pa)
 	normal = countNormal(username, pa)
+	count_2FA = countall(username, pa)
+	countSP = countServiceProvider(username, pa)
+	
 	# inventory =
 	# inOneWeek =
 	# inOneMonth =
