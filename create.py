@@ -2,7 +2,7 @@ import mysql.connector
 import psycopg2
 import datetime
 inventory_on_20200512 = 142
-baseline_date = x = datetime.datetime(2020, 5, 12)
+baseline_date = datetime.datetime(2020, 5, 12)
 def getConnection(username):
     new_conn = psycopg2.connect(user=username, database='odin')
 
@@ -531,3 +531,4 @@ def getInventory(username, pass_word):
     shipped = cursor.fetchone()[0]
     cursor.execute("select sum(number) from inventory;")
     inventory = cursor.fetchone()[0]
+
