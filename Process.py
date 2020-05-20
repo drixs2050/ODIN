@@ -3,7 +3,7 @@ from create import *
 import psycopg2
 import sys
 import json
-
+import getpass
 
 def archive(username):
 	conn = psycopg2.connect(user=username, database='odin')
@@ -135,5 +135,11 @@ if __name__ == "__main__":
 	if (len(sys.argv[1:]) > 1):
 		moveData(sys.argv[1], 'archive')
 		moveData(sys.argv[1], 'grouper')
+	if (len(sys.argv[1:]) > 2):
+		password = getpass.getpass()
+		conn = getEtokenConnection(sys.argv[1], password) 
+		cursor = conn.cursor()
+		cursor.execute("select date from inventory;")
+		print(cursor.fetchall()[-1][0])
 
 
