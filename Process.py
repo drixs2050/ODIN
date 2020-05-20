@@ -120,12 +120,13 @@ def etokenJsonify(username, pa):
 	payload = {}
 	virtual = countvirtual(username, pa)
 	normal = countNormal(username, pa)
-	# inventory =
+	total2FA = countall()
+	inventory = getInventory()
 	# inOneWeek =
 	# inOneMonth =
 	# inTwoMonth =
 	# inThreeMonth =
-	# count 2FA =
+	total2FA = countall()
 
 if __name__ == "__main__":
 	processing(sys.argv[1])

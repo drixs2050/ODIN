@@ -1,0 +1,59 @@
+Index: Process.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from datetime import datetime\r\nfrom create import *\r\nimport psycopg2\r\nimport sys\r\n\r\ndef archive(username, infolist):\r\n\tconn = psycopg2.connect(user=username, database='odin')\r\n\tcursor = conn.cursor()\r\n\tcursor.execute(\"SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');\")\r\n\tif cursor.fetchone()[0] == False:\r\n\t\tattr = {'payload': 'varchar', 'processed_by': 'varchar', 'processed_on': 'timestamp', 'archived_on': 'timestamp'}\r\n\t\tcreateTable('archive', attr, username)\r\n\tfor i in infolist:\r\n\t\tprocessed_time = datetime.now()\r\n\t\tdt_string = processed_time.strftime(\"\"\"%d/%m/%Y %H:%M:%S.%f\"\"\")\t\r\n\t\ti['archived_on'] = dt_string\r\n\t\ti['processed_by'] = username\r\n\t\tinsertTableJson(i, username)\r\n\r\n\r\ndef processing(username):\r\n\tconn = psycopg2.connect(user=username, database='odin')\r\n\tcursor = conn.cursor()\r\n\tcursor.execute(\"SELECT payload from incoming;\")\r\n\tincoming_data = []\r\n\tfor row in cursor.fetchall():\r\n\t\tincoming_data.append(row[0])\r\n\tconn.close()\r\n\treturn incoming_data\r\n\r\n\r\ndef execute(username):\r\n\tincoming_data = processing(username)\r\n\t#For creating tables\r\n\tarchive_lst = []\r\n\tfor json in incoming_data:\r\n\t\tcurrent_tables = showAllTablesODIN(False, username)\r\n\t\tif json['name'].lower() == 'grouper' and not (json['name'].lower() in current_tables):\r\n\t\t\tvar_dict = {}\r\n\t\t\tmax_attribute_len = 0\r\n\t\t\tmax_index = 0\r\n\t\t\tfor i in range(len(incoming_data)):\r\n\t\t\t\tif (len(incoming_data[i]) > max_attribute_len):\r\n\t\t\t\t\tmax_attribute_len = len(incoming_data[i])\r\n\t\t\t\t\tmax_index = i\r\n\t\t\tfor column in incoming_data[max_index]:\r\n\t\t\t\tif type(incoming_data[max_index][column]) == type({}):\r\n\t\t\t\t\tvar_dict['stemname'] = 'varchar'\r\n\t\t\t\t\tvar_dict['numstems'] = 'Int'\r\n\t\t\t\telse:\r\n\t\t\t\t\tvar_dict[column] = 'varchar'\r\n\t\t\tcreateTable(incoming_data[0]['name'], var_dict, username)\r\n\r\n\t\tif (json['name'].lower() in current_tables):\r\n\t\t\tprocessed_time = datetime.now()\r\n\t\t\tdt_string = processed_time.strftime(\"\"\"%d/%m/%Y %H:%M:%S.%f\"\"\")\r\n\t\t\t#print(showAllAttributes(username, json['name']))\t\r\n\t\t\tinsertTableJson(json,username)\r\n\t\t\tsingle_archive = {'name': 'archive', 'payload': 'varchar', 'processed_on': dt_string}\r\n\t\t\tarchive_lst.append(single_archive)\r\n\tprint(archive_lst)\r\n\tarchive(username, archive_lst)\r\n\t\t\t\r\n\t\t\t\r\nif __name__ == \"__main__\":\r\n\tprocessing(sys.argv[1])\r\n\texecute(sys.argv[1])\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- Process.py	(revision 15ad693ce8221b01fc17d6204e91c6902c520ca1)
++++ Process.py	(date 1587762153210)
+@@ -3,16 +3,18 @@
+ import psycopg2
+ import sys
+ 
++
+ def archive(username, infolist):
+ 	conn = psycopg2.connect(user=username, database='odin')
+ 	cursor = conn.cursor()
+-	cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');")
++	cursor.execute(
++		"SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');")
+ 	if cursor.fetchone()[0] == False:
+-		attr = {'payload': 'varchar', 'processed_by': 'varchar', 'processed_on': 'timestamp', 'archived_on': 'timestamp'}
++		attr = {'payload': 'varchar', 'processed_by': 'varchar', 'processed_on': 'timestamp','archived_on': 'timestamp'}
+ 		createTable('archive', attr, username)
+ 	for i in infolist:
+ 		processed_time = datetime.now()
+-		dt_string = processed_time.strftime("""%d/%m/%Y %H:%M:%S.%f""")	
++		dt_string = processed_time.strftime("""%d/%m/%Y %H:%M:%S.%f""")
+ 		i['archived_on'] = dt_string
+ 		i['processed_by'] = username
+ 		insertTableJson(i, username)
+@@ -31,7 +33,7 @@
+ 
+ def execute(username):
+ 	incoming_data = processing(username)
+-	#For creating tables
++	# For creating tables
+ 	archive_lst = []
+ 	for json in incoming_data:
+ 		current_tables = showAllTablesODIN(False, username)
+@@ -54,14 +56,14 @@
+ 		if (json['name'].lower() in current_tables):
+ 			processed_time = datetime.now()
+ 			dt_string = processed_time.strftime("""%d/%m/%Y %H:%M:%S.%f""")
+-			#print(showAllAttributes(username, json['name']))	
+-			insertTableJson(json,username)
++			# print(showAllAttributes(username, json['name']))
++			insertTableJson(json, username)
+ 			single_archive = {'name': 'archive', 'payload': 'varchar', 'processed_on': dt_string}
+ 			archive_lst.append(single_archive)
+ 	print(archive_lst)
+ 	archive(username, archive_lst)
+-			
+-			
++
++
+ if __name__ == "__main__":
+ 	processing(sys.argv[1])
+ 	execute(sys.argv[1])

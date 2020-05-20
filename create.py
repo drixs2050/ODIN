@@ -1,7 +1,8 @@
 import mysql.connector
 import psycopg2
-
-
+import datetime
+inventory_on_20200512 = 142
+baseline_date = x = datetime.datetime(2020, 5, 12)
 def getConnection(username):
     new_conn = psycopg2.connect(user=username, database='odin')
 
@@ -492,17 +493,19 @@ def showVirtualUsers(username, pass_word):
         print(i[0])
 
 
-def showExpiring(username, pass_word):
+def numExpiring(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute(
         "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + 14;")
     all = cursor.fetchall()
+    j = 0
     for i in all:
         print(i[0])
+        j += 1
+    return j
 
-
-def showExpiringIn(username, pass_word, num_month):
+def numExpiringIn(username, pass_word, num_month):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     if(num_month < 0.5):
@@ -513,7 +516,18 @@ def showExpiringIn(username, pass_word, num_month):
             "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + {} and expirationdate < curdate() + {};".format(str(num_month * 30), str(num_month - 1 * 30)))
     all = cursor.fetchall()
     expiring = []
+    j = 0
     for i in all:
         expiring.append(i[0])
         print(i[0])
-    return expiring
+        j += 1
+    return j
+
+
+def getInventory(username, pass_word):
+    conn = getEtokenConnection(username, pass_word)
+    cursor = conn.cursor()
+    cursor.execute("select sum(shipnumber) from orderhistory;")
+    shipped = cursor.fetchone()[0]
+    cursor.execute("select sum(number) from inventory;")
+    inventory = cursor.fetchone()[0]

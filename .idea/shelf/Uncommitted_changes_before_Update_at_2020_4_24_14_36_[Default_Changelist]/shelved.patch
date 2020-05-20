@@ -1,0 +1,42 @@
+Index: Process.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>from datetime import datetime\r\nfrom create import *\r\nimport psycopg2\r\nimport sys\r\n\r\ndef archive(username):\r\n\tconn = psycopg2.connect(user=username, database='odin')\r\n\tcursor = conn.cursor()\r\n\tcursor.execute(\"SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');\")\r\n\tif cursor.fetchone()[0] == 'f':\r\n\t\tattr = {\"payload\": \"json\", \"processed_by\": \"varchar\", \"processed_on\": \"datetime\", \"archived on\": \"datetime\"}\r\n\t\tcreateTable(\"archive\", attr, username)\r\n\r\n\r\ndef processing(username):\r\n\tconn = psycopg2.connect(user=username, database='odin')\r\n\tcursor = conn.cursor()\r\n\tcursor.execute(\"SELECT payload from incoming;\")\r\n\tincoming_data = []\r\n\tfor row in cursor.fetchall():\r\n\t\tincoming_data.append(row[0])\r\n\tconn.close()\r\n\treturn incoming_data\r\n\r\n\r\ndef execute(username):\r\n\tincoming_data = processing(username)\r\n\tcurrent_tables = showAllTablesODIN(False, username)\r\n\tif (incoming_data[0]['name'].lower() == 'grouper' and not(incoming_data[0]['name'].lower() in current_tables)):\r\n\t\tvar_dict = {}\r\n\t\tmax_attribute_len = 0\r\n\t\tmax_index = 0\r\n\t\tfor i in range(len(incoming_data)):\r\n\t\t\tif (len(incoming_data[i]) > max_attribute_len):\r\n\t\t\t\tmax_attribute_len = len(incoming_data[i])\r\n\t\t\t\tmax_index = i\r\n\t\r\n\t\tfor column in incoming_data[max_index]:\r\n\t\t\tif (type(incoming_data[max_index][column]) == type({})):\r\n\t\t\t\tvar_dict['stemname'] = 'varchar'\r\n\t\t\t\tvar_dict['numstems'] = 'Int'\r\n\t\t\telse:\r\n\t\t\t\tvar_dict[column] = 'varchar'\r\n\t\tcreateTable(incoming_data[0]['name'], var_dict, username)\r\n\r\n\tif (incoming_data[0]['name'].lower() in current_tables):\r\n\t\tinsertTable(incoming_data,username)\t\r\nif __name__ == \"__main__\":\r\n\tprocessing(sys.argv[1])\r\n\texecute(sys.argv[1])\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- Process.py	(revision d484e361dcf626b08b4c1299fe33f0000c438c97)
++++ Process.py	(date 1587587949947)
+@@ -3,13 +3,17 @@
+ import psycopg2
+ import sys
+ 
+-def archive(username):
++def archive(username, processed_time):
+ 	conn = psycopg2.connect(user=username, database='odin')
+ 	cursor = conn.cursor()
+ 	cursor.execute("SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');")
+ 	if cursor.fetchone()[0] == 'f':
+ 		attr = {"payload": "json", "processed_by": "varchar", "processed_on": "datetime", "archived on": "datetime"}
+ 		createTable("archive", attr, username)
++	for i in processed_time:
++		archived_time = datetime.now()
++		query = ""
++		commitQuery(query)
+ 
+ 
+ def processing(username):
+@@ -42,9 +46,11 @@
+ 			else:
+ 				var_dict[column] = 'varchar'
+ 		createTable(incoming_data[0]['name'], var_dict, username)
+-
+ 	if (incoming_data[0]['name'].lower() in current_tables):
+-		insertTable(incoming_data,username)	
++		insertTable(incoming_data, username)
++
++
++
+ if __name__ == "__main__":
+ 	processing(sys.argv[1])
+ 	execute(sys.argv[1])
