@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from create import *
 import psycopg2
 import sys
@@ -122,14 +122,11 @@ def etokenJsonify(username, pa):
 	normal = countNormal(username, pa)
 	count_2FA = countall(username, pa)
 	countSP = countServiceProvider(username, pa)
-	
+	inTwoWeek = numExpiring(username, pa)
+	inOneMonth = numExpiringIn(username, pa, 1)
+	inTwoMonth = numExpiringIn(username, pa, 2) 		
 	# inventory =
-	# inOneWeek =
-	# inOneMonth =
-	# inTwoMonth =
-	# inThreeMonth =
-	# count 2FA =
-
+	
 if __name__ == "__main__":
 	processing(sys.argv[1])
 	execute(sys.argv[1])
@@ -143,6 +140,8 @@ if __name__ == "__main__":
 		conn = getEtokenConnection(sys.argv[1], password) 
 		cursor = conn.cursor()
 		cursor.execute("select date from inventory;")
-		print(cursor.fetchall()[-1][0])
+		#print(cursor.fetchall()[-1][0])
+		baselinedate = datetime.date(2020,5,12)
+		print(baselinedate < cursor.fetchall()[-1][0])
 
 
