@@ -91,7 +91,7 @@ def execute(username):
 	for data in incoming_data:
 		table_name = data['name'].lower()
 		current_tables = showAllTablesODIN(False, username)
-		if table_name == 'grouper' and not (table_name in current_tables):
+		if (table_name == 'grouper') and not (table_name in current_tables):
 			var_dict = {}
 			max_attribute_len = 0
 			max_index = 0
@@ -106,8 +106,18 @@ def execute(username):
 				else:
 					var_dict[column] = 'varchar'
 			createTable(table_name, var_dict, username)
+		if (table_name == 'etoken') and not (table_name in current_tables):
+			var_dict = {}
+			for column in data:
+				if (type(column) == int):
+					var_dict[column] = 'Int'
+				else:
+					var_dict[column] = 'varchar'
+			createTable(table_name, var_dict, username)
+			print("hi")
 		if (table_name in current_tables):
 			attribute_lst = showPSQLAttribute(table_name, username)
+			print(attribute_lst)
 			for keys in data:
 				if keys not in attribute_lst:
 					alterTable(data['name'], keys, 'varchar', username)
@@ -118,30 +128,36 @@ def execute(username):
 
 def etokenJsonify(username, pa):
 	payload = {}
-	virtual = countvirtual(username, pa)
-	normal = countNormal(username, pa)
-	count_2FA = countall(username, pa)
-	countSP = countServiceProvider(username, pa)
-	inTwoWeek = numExpiring(username, pa)
-	inOneMonth = numExpiringIn(username, pa, 1)
-	inTwoMonth = numExpiringIn(username, pa, 2) 		
-	# inventory =
+	payload['name'] = 'etoken'
+	payload['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+	payload['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+	payload['service_environment'] = "PROD"
+	payload['virtual_etoken'] = countvirtual(username, pa)
+	payload['normal_etoken'] = countNormal(username, pa)
+	payload['count_2fa'] = countall(username, pa)
+	payload['countsp'] = countServiceProvider(username, pa)
+	payload['in2weeks'] = numExpiring(username, pa)
+	payload['in1month'] = numExpiringIn(username, pa, 1)
+	payload['in2month'] = numExpiringIn(username, pa, 2)
+	payload['inventory'] = getInventory(username, pa)
+	conn = psycopg2.connect(user=username, database='odin')
+	cursor = conn.cursor()
+	cursor.execute("INSERT INTO incoming (payload) VALUES ('%s')" % json.dumps(payload, indent=4))
+	conn.commit()
+	return payload
+
 	
 if __name__ == "__main__":
+	password = getpass.getpass()
 	processing(sys.argv[1])
+	etokenJsonify(sys.argv[1], password)
+	json2csv(sys.argv[1])
 	execute(sys.argv[1])
 	createIncomingTrigger(sys.argv[1])
 	createArchiveTrigger(sys.argv[1])
 	if (len(sys.argv[1:]) > 1):
 		moveData(sys.argv[1], 'archive')
 		moveData(sys.argv[1], 'grouper')
-	if (len(sys.argv[1:]) > 2):
-		password = getpass.getpass()
-		conn = getEtokenConnection(sys.argv[1], password) 
-		cursor = conn.cursor()
-		cursor.execute("select date from inventory;")
-		#print(cursor.fetchall()[-1][0])
-		baselinedate = datetime.date(2020,5,12)
-		print(baselinedate < cursor.fetchall()[-1][0])
+
 
 

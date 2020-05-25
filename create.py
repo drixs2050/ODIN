@@ -1,6 +1,9 @@
 import mysql.connector
 import psycopg2
-
+import datetime
+import csv
+inventory_on_20200510 = 132
+baseline_date = datetime.date(2020, 5, 10)
 
 def getConnection(username):
     new_conn = psycopg2.connect(user=username, database='odin')
@@ -391,6 +394,21 @@ def insertTableJsonQuery(json):
         table_name = json["name"]
         insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
         return insert_query
+    elif (json["name"].lower() == "etoken"):
+        columnNotDict = []
+        valueNotDict = []
+        for column_name in json:
+            if (column_name not in columnNotDict):
+                columnNotDict.append(column_name)
+            valueNotDict.append(json[column_name])
+        value = value +str(tuple(valueNotDict)) + ','
+        column = str(tuple(columnNotDict))
+        column = column.replace("'", "")
+        value = value.strip(", ")
+        table_name = json["name"]
+        insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
+        return insert_query
+        
 
 
 def insertTableQuery(json):
@@ -454,21 +472,21 @@ def countall(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute("select count(*) from usertokens;")
-    print(cursor.fetchone()[0])
+    return(cursor.fetchone()[0])
 
 
 def countvirtual(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute("select count(*) from usertokens where productname like '%virtual%';")
-    print(cursor.fetchone()[0])
+    return(cursor.fetchone()[0])
 
 
 def countServiceProvider(username, pass_word):
     conn = getSQLConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute("select count(*) from splist;")
-    print(cursor.fetchone()[0])
+    return(cursor.fetchone()[0])
 
 
 def countNormal(username, pass_word):
@@ -479,7 +497,7 @@ def countNormal(username, pass_word):
     cursor.execute("select count(*) from usertokens;")
     all = cursor.fetchone()[0]
     normal = int(all) - int(virtual)
-    print(normal)
+    return(normal)
 
 
 def showVirtualUsers(username, pass_word):
@@ -492,28 +510,73 @@ def showVirtualUsers(username, pass_word):
         print(i[0])
 
 
-def showExpiring(username, pass_word):
+def numExpiring(username, pass_word):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     cursor.execute(
-        "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + 14;")
+        "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < adddate(curdate(),14);")
     all = cursor.fetchall()
+    j = 0
     for i in all:
-        print(i[0])
+        #print(i[0])
+        j += 1
+    return j
 
 
-def showExpiringIn(username, pass_word, num_month):
+def numExpiringIn(username, pass_word, num_month):
     conn = getEtokenConnection(username, pass_word)
     cursor = conn.cursor()
     if(num_month < 0.5):
         cursor.execute(
-            "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + 14;")
+            "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < adddate(curdate(), 14);")
     else:
         cursor.execute(
-            "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < curdate() + {} and expirationdate < curdate() + {};".format(str(num_month * 30), str(num_month - 1 * 30)))
+            "select distinct utorid from myusers join usertokens on myusers.oid = usertokens.useroid where expirationdate < adddate(curdate(), {});".format(str(num_month * 30), str(num_month - 1 * 30)))
     all = cursor.fetchall()
     expiring = []
+    j = 0
     for i in all:
         expiring.append(i[0])
-        print(i[0])
-    return expiring
+        #print(i[0])
+        j += 1
+    return j
+
+def getInventory(username, pass_word):
+    conn = getEtokenConnection(username, pass_word)
+    cursor = conn.cursor()
+    cursor.execute("select * from inventory;")
+    curr_inventory = inventory_on_20200510
+    for i in cursor.fetchall()[::-1]:
+        if i[0] >= baseline_date:
+            curr_inventory += 300
+        if i[0] < baseline_date:
+            break
+    cursor.execute("select * from orderhistory;")
+    curr_inventory = inventory_on_20200510
+    for i in cursor.fetchall()[::-1]:
+        if i[0] >= baseline_date:
+            curr_inventory -= i[-1]
+        if i[0] < baseline_date:
+            break
+    return curr_inventory
+
+def json2csv(username):
+    conn = getConnection(username)
+    cursor = conn.cursor()
+    cursor.execute("select payload from incoming;")
+    
+    All = cursor.fetchall()
+    csv_columns = list(All[0][0].keys())
+    csv_file = "jsons.csv"
+    jsons = []
+    for i in All:
+        if (i[0]["name"] == 'etoken'):
+            jsons.append(i[0])
+    try:
+        with open(csv_file, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+            writer.writeheader()
+            for json in jsons:
+                writer.writerow(json)
+    except IOError:
+        print("I/O error")
