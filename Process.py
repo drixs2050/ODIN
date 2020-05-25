@@ -132,6 +132,8 @@ def etokenJsonify(username, pa):
 	payload['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
 	payload['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
 	payload['service_environment'] = "PROD"
+	payload['service_version'] = "9.0"
+	payload['service_title'] = "Safenet Authentication Manager Server 9.0"
 	payload['virtual_etoken'] = countvirtual(username, pa)
 	payload['normal_etoken'] = countNormal(username, pa)
 	payload['count_2fa'] = countall(username, pa)
