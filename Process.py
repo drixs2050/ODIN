@@ -5,28 +5,28 @@ import sys
 import json
 import getpass
 
-def archive(username):
-	conn = psycopg2.connect(user=username, database='odin')
+def archive(username, password):
+	conn = getConnection(username, password)
 	cursor = conn.cursor()
 	cursor.execute(
 		"SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'archive');")
 	if cursor.fetchone()[0] == False:
 		attr = {'payload': 'json', 'processed_by': 'VARCHAR DEFAULT CURRENT_USER', 'processed_on': 'timestamp',
 				'archived_on': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'}
-		createTable('archive', attr, username)
-	moveData(username, 'incoming')
+		createTable('archive', attr, username, password)
+	moveData(username, 'incoming', password)
 
 
-def moveData(username, tablename):
-	conn = psycopg2.connect(user=username, database='odin')
+def moveData(username, tablename, password):
+	conn = getConnection(username, password)
 	cursor = conn.cursor()
 	cursor.execute("DELETE FROM {};".format(tablename))
 	conn.commit()
 	conn.close()
 
 
-def checkIncomingTrigger(username):
-	conn = psycopg2.connect(user=username, database='odin')
+def checkIncomingTrigger(username, password):
+	conn = getConnection(username, password)
 	cursor = conn.cursor()
 	cursor.execute("""SELECT tgname from pg_trigger where not tgisinternal AND tgname='t_incoming_delete';""")
 	trigger_status = None
@@ -38,8 +38,8 @@ def checkIncomingTrigger(username):
 	conn.close()
 
 
-def checkArchiveTrigger(username):
-	conn = psycopg2.connect(user=username, database='odin')
+def checkArchiveTrigger(username, password):
+	conn = getConnection(username, password)
 	cursor = conn.cursor()
 	cursor.execute("""SELECT tgname from pg_trigger where not tgisinternal AND tgname='t_archive_delete';""")
 	trigger_status = None
@@ -51,9 +51,9 @@ def checkArchiveTrigger(username):
 	conn.close()
 
 
-def createArchiveTrigger(username):
-	if (checkArchiveTrigger(username) == False):
-		conn = psycopg2.connect(user=username, database='odin')
+def createArchiveTrigger(username, password):
+	if (checkArchiveTrigger(username, password) == False):
+		conn = getConnection(username, password)
 		cursor = conn.cursor()
 		cursor.execute(
 			"""CREATE OR REPLACE FUNCTION archive_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO incoming (payload, processed_on) VALUES (OLD.payload, OLD.processed_on); RETURN OLD; END; $$ LANGUAGE 'plpgsql';""")
@@ -63,9 +63,9 @@ def createArchiveTrigger(username):
 		conn.close()
 
 
-def createIncomingTrigger(username):
-	if (checkIncomingTrigger(username) == False):
-		conn = psycopg2.connect(user=username, database='odin')
+def createIncomingTrigger(username, password):
+	if (checkIncomingTrigger(username,password) == False):
+		conn = getConnection(username, password)
 		cursor = conn.cursor()
 		cursor.execute(
 			"""CREATE OR REPLACE FUNCTION incoming_delete() RETURNS TRIGGER AS $$ BEGIN INSERT INTO archive (payload, processed_on) VALUES (OLD.payload, OLD.processed_on); RETURN OLD; END; $$ LANGUAGE 'plpgsql';""")
@@ -75,8 +75,8 @@ def createIncomingTrigger(username):
 		conn.close()
 
 
-def processing(username):
-	conn = psycopg2.connect(user=username, database='odin')
+def processing(username, password):
+	conn = getConnection(username, password)
 	cursor = conn.cursor()
 	cursor.execute("SELECT payload from incoming;")
 	incoming_data = []
@@ -87,10 +87,10 @@ def processing(username):
 
 
 def execute(username):
-	incoming_data = processing(username)
+	incoming_data = processing(username, password)
 	for data in incoming_data:
 		table_name = data['name'].lower()
-		current_tables = showAllTablesODIN(False, username)
+		current_tables = showAllTablesODIN(False, username, password)
 		if (table_name == 'grouper') and not (table_name in current_tables):
 			var_dict = {}
 			max_attribute_len = 0
@@ -105,7 +105,7 @@ def execute(username):
 					var_dict['numstems'] = 'Int'
 				else:
 					var_dict[column] = 'varchar'
-			createTable(table_name, var_dict, username)
+			createTable(table_name, var_dict, username, password)
 		if (table_name == 'etoken') and not (table_name in current_tables):
 			var_dict = {}
 			for column in data:
@@ -113,18 +113,17 @@ def execute(username):
 					var_dict[column] = 'Int'
 				else:
 					var_dict[column] = 'varchar'
-			createTable(table_name, var_dict, username)
-			print("hi")
+			createTable(table_name, var_dict, username, password)
+			
 		if (table_name in current_tables):
-			attribute_lst = showPSQLAttribute(table_name, username)
-			print(attribute_lst)
+			attribute_lst = showPSQLAttribute(table_name, username, password)
 			for keys in data:
 				if keys not in attribute_lst:
-					alterTable(data['name'], keys, 'varchar', username)
+					alterTable(data['name'], keys, 'varchar', username, password)
 			#processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-			insertTableJson(data, username)
+			insertTableJson(data, username, password)
 	if (incoming_data != []):
-		archive(username)
+		archive(username, password)
 
 def etokenJsonify(username, pa):
 	payload = {}
@@ -142,7 +141,7 @@ def etokenJsonify(username, pa):
 	payload['in1month'] = numExpiringIn(username, pa, 1)
 	payload['in2month'] = numExpiringIn(username, pa, 2)
 	payload['inventory'] = getInventory(username, pa)
-	conn = psycopg2.connect(user=username, database='odin')
+	conn = getConnection(username, pa)
 	cursor = conn.cursor()
 	cursor.execute("INSERT INTO incoming (payload) VALUES ('%s')" % json.dumps(payload, indent=4))
 	conn.commit()
@@ -151,15 +150,15 @@ def etokenJsonify(username, pa):
 	
 if __name__ == "__main__":
 	password = getpass.getpass()
-	processing(sys.argv[1])
+	processing(sys.argv[1], password)
 	etokenJsonify(sys.argv[1], password)
-	json2csv(sys.argv[1])
+	#json2csv(sys.argv[1])
 	execute(sys.argv[1])
-	createIncomingTrigger(sys.argv[1])
-	createArchiveTrigger(sys.argv[1])
+	createIncomingTrigger(sys.argv[1], password)
+	createArchiveTrigger(sys.argv[1], password)
 	if (len(sys.argv[1:]) > 1):
-		moveData(sys.argv[1], 'archive')
-		moveData(sys.argv[1], 'grouper')
+		moveData(sys.argv[1], 'archive', password)
+		moveData(sys.argv[1], 'grouper', password)
 
 
 

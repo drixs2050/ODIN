@@ -5,10 +5,9 @@ import csv
 inventory_on_20200510 = 132
 baseline_date = datetime.date(2020, 5, 10)
 
-def getConnection(username):
-    new_conn = psycopg2.connect(user=username, database='odin')
-
-    return new_conn
+def getConnection(username, password):
+    conn = psycopg2.connect(host="is-sdt-srv01.is.utoronto.ca", user= username, dbname ="odin", password= password)   
+    return conn
 
 
 def getSQLConnection(username, pass_word):
@@ -35,8 +34,8 @@ def showSQLAttribute(username, pass_word):
     return i
 
 
-def showPSQLAttribute(table, username):
-    conn = getConnection(username)
+def showPSQLAttribute(table, username, password):
+    conn = getConnection(username, password)
     cursor = conn.cursor()
     cursor.execute("SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{}';".format(table))
     list = []
@@ -88,9 +87,9 @@ def searchInOneAttribute(username, pass_word, attribute, key_word):
     conn.close()
 
 
-def showAllTablesODIN(print_boolean, username):
+def showAllTablesODIN(print_boolean, username, password):
     try:
-        conn = getConnection(username)
+        conn = getConnection(username, password)
         cursor = conn.cursor()
         query = """Select a."Name" from (
 SELECT n.nspname as "Schema",
@@ -122,8 +121,8 @@ ORDER BY 1,2) a"""
                 return table_lst
 
 
-def showAllAttributes(username, table_name):
-    conn = getConnection(username)
+def showAllAttributes(username, table_name, password):
+    conn = getConnection(username, password)
     cursor = conn.cursor()
     query = cursor.execute("SELECT * FROM {};".format(table_name))
     for row in cursor.fetchall():
@@ -132,9 +131,9 @@ def showAllAttributes(username, table_name):
         return row
 
 
-def addComment(table_name, comment, username):
+def addComment(table_name, comment, username, password):
     try:
-        conn = getConnection(username)
+        conn = getConnection(username, password)
         cursor = conn.cursor()
         cursor.execute("COMMENT ON TABLE {} IS '{}';".format(table_name, comment))
         conn.commit()
@@ -146,7 +145,7 @@ def addComment(table_name, comment, username):
             conn.close()
 
 
-def commitQuery(query, output, username):
+def commitQuery(query, output, username, password):
     """
     Prints out a successful statement if query worked. Else, print a error statement.
 
@@ -158,7 +157,7 @@ def commitQuery(query, output, username):
       This string is the expected output that is printed depending on the query.
     """
     try:
-        conn = getConnection(username)
+        conn = getConnection(username, password)
         cursor = conn.cursor()
         cursor.execute("SELECT version();")
         record = cursor.fetchone()
@@ -177,7 +176,7 @@ Alter, add and remove, you don't want to update (change the data)
 """
 
 
-def createTable(table_name, var_dict, username):
+def createTable(table_name, var_dict, username, password):
     """
     Creates a new table in the odin database.
 
@@ -193,19 +192,19 @@ def createTable(table_name, var_dict, username):
     Returns a message saying Table successfully created
     or error statement if syntax error.
     """
-    commitQuery(createTableQuery(table_name, var_dict), "Table created successfully in PostgreSQL", username)
+    commitQuery(createTableQuery(table_name, var_dict), "Table created successfully in PostgreSQL", username, password)
     commitQuery("Alter table {} OWNER TO odin;".format(table_name), "Table created successfully in PostgreSQL",
-                username)
+                username, password)
 
 
-def insertTableJson(json, username):
+def insertTableJson(json, username, password):
     """
     Inserts a json blobs that are to be added into the odin database.
     """
-    commitQuery(insertTableJsonQuery(json), "Table inserted successfully in PostgreSQL", username)
+    commitQuery(insertTableJsonQuery(json), "Table inserted successfully in PostgreSQL", username, password)
 
 
-def insertTable(json, username):
+def insertTable(json, username, password):
     """
     Inserts a list of values into the columns in the odin database.
 
@@ -223,10 +222,10 @@ def insertTable(json, username):
     or error statement if syntax error.
 
     """
-    commitQuery(insertTableQuery(json), "Table inserted successfully in PostgreSQL", username)
+    commitQuery(insertTableQuery(json), "Table inserted successfully in PostgreSQL", username, password)
 
 
-def alterTable(table_name, column_name, column_type, username):
+def alterTable(table_name, column_name, column_type, username, password):
     """
     Adds one single column into the existing table.
 
@@ -244,10 +243,10 @@ def alterTable(table_name, column_name, column_type, username):
     or error statement if syntax error.
     """
     commitQuery(alterTableQuery(table_name, column_name, column_type), "Table altered successfully in PostgreSQL",
-                username)
+                username, password)
 
 
-def updateTable(table_name, attr_dict, condition=None):
+def updateTable(table_name, attr_dict, password, condition=None):
     """
     Updates the table_name by the given attr_dict. If the condition is given,
     then updates only at the specific condition.
@@ -268,10 +267,10 @@ def updateTable(table_name, attr_dict, condition=None):
     Returns a message saying Table successfully updated
     or error statement if syntax error.
     """
-    commitQuery(updateTableQuery(table_name, attr_dict, *condition), "Table updated successfully in PostgreSQL")
+    commitQuery(updateTableQuery(table_name, attr_dict, *condition), "Table updated successfully in PostgreSQL", password)
 
 
-def deleteTable(table_name, condition):
+def deleteTable(table_name, condition, password):
     """
     Deletes the rows of the specific condition.
 
@@ -288,14 +287,14 @@ def deleteTable(table_name, condition):
     Returns a message saying Table successfully deleted
     or error statement if syntax error.
     """
-    commitQuery("DELETE FROM {} {};".format(table_name, condition), "Table deletected successfully in PostgreSQL")
+    commitQuery("DELETE FROM {} {};".format(table_name, condition), "Table deletected successfully in PostgreSQL", password)
 
 
-def dropTable(table_name, username):
-    commitQuery("Drop table {};".format(table_name), "Table dropped successfully in PostgreSQL", username)
+def dropTable(table_name, username, password):
+    commitQuery("Drop table {};".format(table_name), "Table dropped successfully in PostgreSQL", username, password)
 
 
-def selectTable(table_name, variable=None, condition=None):
+def selectTable(table_name, password, variable=None, condition=None):
     """
     Selects the table to read, if the columnlst is not defined, then reads the entire table,
     otherwise, reads the specific columns given.
@@ -313,7 +312,7 @@ def selectTable(table_name, variable=None, condition=None):
     Returns a message saying Table successfully read
     or error statement if syntax error.
     """
-    commitQuery(selectTableQuery(table_name, variable, condition), "Table read successfully in PostgreSQL")
+    commitQuery(selectTableQuery(table_name, variable, condition), "Table read successfully in PostgreSQL", password)
 
 
 def selectTableQuery(table_name, variable=None, condition=None):
@@ -560,8 +559,8 @@ def getInventory(username, pass_word):
             break
     return curr_inventory
 
-def json2csv(username):
-    conn = getConnection(username)
+def json2csv(username, password):
+    conn = getConnection(username, password)
     cursor = conn.cursor()
     cursor.execute("select payload from incoming;")
     
