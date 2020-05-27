@@ -14,6 +14,7 @@ def archive(username, password):
 		attr = {'payload': 'json', 'processed_by': 'VARCHAR DEFAULT CURRENT_USER', 'processed_on': 'timestamp',
 				'archived_on': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'}
 		createTable('archive', attr, username, password)
+	
 	moveData(username, 'incoming', password)
 
 
@@ -86,7 +87,7 @@ def processing(username, password):
 	return incoming_data
 
 
-def execute(username):
+def execute(username, password):
 	incoming_data = processing(username, password)
 	for data in incoming_data:
 		table_name = data['name'].lower()
@@ -95,16 +96,18 @@ def execute(username):
 			var_dict = {}
 			max_attribute_len = 0
 			max_index = 0
-			for i in range(len(incoming_data)):
-				if (len(incoming_data[i]) > max_attribute_len):
-					max_attribute_len = len(incoming_data[i])
-					max_index = i
-			for column in incoming_data[max_index]:
-				if type(incoming_data[max_index][column]) == type({}):
+			#for i in range(len(incoming_data)):
+			#	if (len(incoming_data[i]) > max_attribute_len) and incoming_data[i]['name'].lower() == 'grouper':
+			#		max_attribute_len = len(incoming_data[i])
+			#		max_index = i
+			for column in data:
+				if type(data[column]) == type({}):
 					var_dict['stemname'] = 'varchar'
 					var_dict['numstems'] = 'Int'
 				else:
-					var_dict[column] = 'varchar'
+					if column != "stem_counts":
+						var_dict[column] = 'varchar'
+			print(var_dict)
 			createTable(table_name, var_dict, username, password)
 		if (table_name == 'etoken') and not (table_name in current_tables):
 			var_dict = {}
@@ -115,13 +118,17 @@ def execute(username):
 					var_dict[column] = 'varchar'
 			createTable(table_name, var_dict, username, password)
 			
-		if (table_name in current_tables):
-			attribute_lst = showPSQLAttribute(table_name, username, password)
-			for keys in data:
-				if keys not in attribute_lst:
-					alterTable(data['name'], keys, 'varchar', username, password)
-			#processed_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
-			insertTableJson(data, username, password)
+		attribute_lst = showPSQLAttribute(table_name, username, password)
+		for keys in data:
+			if keys not in attribute_lst and keys != "stem_counts":
+				alterTable(data['name'], keys, 'varchar', username, password)
+		"""conn = getConnection(username, pa)
+		cursor = conn.cursor()
+		cursor.execute("SELECT run_date FROM etoken;")
+		checker = False
+		for row in cursor.fetchall():
+			row[0] == datetime.datetime.now().strftime("%Y-%m-%d") """
+		insertTableJson(data, username, password)
 	if (incoming_data != []):
 		archive(username, password)
 
@@ -141,8 +148,15 @@ def etokenJsonify(username, pa):
 	payload['in1month'] = numExpiringIn(username, pa, 1)
 	payload['in2month'] = numExpiringIn(username, pa, 2)
 	payload['inventory'] = getInventory(username, pa)
-	conn = getConnection(username, pa)
+	"""conn = getConnection(username, pa)
 	cursor = conn.cursor()
+	cursor.execute("SELECT payload FROM incoming where payload ->> 'name' = 'etoken';")
+	checker = False
+	for row in cursor.fetchall():
+		if row[0]['run_date'] == datetime.datetime.now().strftime("%Y-%m-%d"):
+			checker = True	
+	if (checker == False):
+	"""
 	cursor.execute("INSERT INTO incoming (payload) VALUES ('%s')" % json.dumps(payload, indent=4))
 	conn.commit()
 	return payload
@@ -150,15 +164,17 @@ def etokenJsonify(username, pa):
 	
 if __name__ == "__main__":
 	password = getpass.getpass()
-	processing(sys.argv[1], password)
-	etokenJsonify(sys.argv[1], password)
-	#json2csv(sys.argv[1])
-	execute(sys.argv[1])
-	createIncomingTrigger(sys.argv[1], password)
-	createArchiveTrigger(sys.argv[1], password)
-	if (len(sys.argv[1:]) > 1):
+	if (len(sys.argv) <= 2):
+		processing(sys.argv[1], password)
+		etokenJsonify(sys.argv[1], password)
+		#json2csv(sys.argv[1])
+		execute(sys.argv[1], password)
+		createIncomingTrigger(sys.argv[1], password)
+		createArchiveTrigger(sys.argv[1], password)
+	if (len(sys.argv) > 2 and (sys.argv[2]) == 'restore'):
 		moveData(sys.argv[1], 'archive', password)
-		moveData(sys.argv[1], 'grouper', password)
+		dropTable('grouper', sys.argv[1], password)
+		dropTable('etoken', sys.argv[1], password)
 
 
 
