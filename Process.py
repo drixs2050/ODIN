@@ -148,7 +148,7 @@ def etokenJsonify(username, pa):
 	payload['in1month'] = numExpiringIn(username, pa, 1)
 	payload['in2month'] = numExpiringIn(username, pa, 2)
 	payload['inventory'] = getInventory(username, pa)
-	"""conn = getConnection(username, pa)
+	conn = getConnection(username, pa)
 	cursor = conn.cursor()
 	cursor.execute("SELECT payload FROM incoming where payload ->> 'name' = 'etoken';")
 	checker = False
@@ -156,8 +156,7 @@ def etokenJsonify(username, pa):
 		if row[0]['run_date'] == datetime.datetime.now().strftime("%Y-%m-%d"):
 			checker = True	
 	if (checker == False):
-	"""
-	cursor.execute("INSERT INTO incoming (payload) VALUES ('%s')" % json.dumps(payload, indent=4))
+		cursor.execute("INSERT INTO incoming (payload) VALUES ('%s')" % json.dumps(payload, indent=4))
 	conn.commit()
 	return payload
 
