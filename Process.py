@@ -162,18 +162,17 @@ def etokenJsonify(username, pa):
 
 	
 if __name__ == "__main__":
-	password = getpass.getpass()
-	if (len(sys.argv) <= 2):
-		processing(sys.argv[1], password)
-		etokenJsonify(sys.argv[1], password)
+	if (len(sys.argv) == 3):
+		processing(sys.argv[1], sys.argv[2])
+		etokenJsonify(sys.argv[1], sys.argv[2])
 		#json2csv(sys.argv[1])
-		execute(sys.argv[1], password)
-		createIncomingTrigger(sys.argv[1], password)
-		createArchiveTrigger(sys.argv[1], password)
-	if (len(sys.argv) > 2 and (sys.argv[2]) == 'restore'):
-		moveData(sys.argv[1], 'archive', password)
-		dropTable('grouper', sys.argv[1], password)
-		dropTable('etoken', sys.argv[1], password)
-
+		execute(sys.argv[1], sys.argv[2])
+		createIncomingTrigger(sys.argv[1], sys.argv[2])
+		createArchiveTrigger(sys.argv[1], sys.argv[2])
+	if (len(sys.argv) > 3):
+		if ((sys.argv[3]) == 'restore'):
+			moveData(sys.argv[1], 'archive', sys.argv[2])
+			dropTable('grouper', sys.argv[1], sys.argv[2])
+			dropTable('etoken', sys.argv[1], sys.argv[2])
 
 
