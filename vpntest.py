@@ -12,7 +12,7 @@ for line in ssh.stdout:
     try:
         json['Date'] = stripped[0][0:6].strip()
         info['Time'] = stripped[0][7:15].strip()
-        info['Port'] = stripped[0][23:36].strip()
+        info['Service'] = stripped[0][16:36].strip()
         info['Group']= stripped[0][46:].strip()
         info['IP'] = stripped[2][5:].strip()
         info['Session Type'] = stripped[4][14:].strip()
