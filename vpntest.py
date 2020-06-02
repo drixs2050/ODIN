@@ -8,20 +8,19 @@ for line in ssh.stdout:
     second = first[0].split(',') + first[1].split(',')
     stripped = [i.strip() for i in second]
     json = {}
-    info = {}
     try:
         json['Date'] = stripped[0][0:6].strip()
         json['Service_version'] = stripped[0][23:36].strip()
-        info['Time'] = stripped[0][7:15].strip()
-        info['Service'] = stripped[0][16:21].strip()
-        info['Group']= stripped[0][46:].strip()
-        info['IP'] = stripped[2][5:].strip()
-        info['Session Type'] = stripped[4][14:].strip()
-        info['Duration'] = stripped[5][10:].strip()
-        info['Bytes xmt'] = stripped[6][11:].strip()
-        info['Bytes rcv'] = stripped[7][11:].strip()
-        info['Reason'] = stripped[8][8:].strip()
-        json[stripped[1][11:].strip()] = info
+        json['user'] = stripped[1][11:].strip()
+        json['Time'] = stripped[0][7:15].strip()
+        json['Service'] = stripped[0][16:21].strip()
+        json['Group']= stripped[0][46:].strip()
+        json['IP'] = stripped[2][5:].strip()
+        json['Session Type'] = stripped[4][14:].strip()
+        json['Duration'] = stripped[5][10:].strip()
+        json['Bytes xmt'] = stripped[6][11:].strip()
+        json['Bytes rcv'] = stripped[7][11:].strip()
+        json['Reason'] = stripped[8][8:].strip()
         jsons.append(json)
         print(json)
     except IndexError:
