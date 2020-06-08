@@ -2,6 +2,7 @@ import mysql.connector
 import psycopg2
 import datetime
 import csv
+import subprocess
 inventory_on_20200510 = 132
 baseline_date = datetime.date(2020, 5, 10)
 
@@ -9,6 +10,9 @@ def getConnection(username, password):
     conn = psycopg2.connect(host="is-sdt-srv01.is.utoronto.ca", user= username, dbname ="odin", password= password)   
     return conn
 
+def getTestConnection(username):
+    conn = psycopg2.connect(user=username, dbname ="odin")
+    return conn
 
 def getSQLConnection(username, pass_word):
     new_conn = mysql.connector.connect(user=username, password=pass_word, database='shibboleth')
@@ -19,7 +23,51 @@ def getEtokenConnection(username, pass_word):
     new_conn = mysql.connector.connect(user=username, password=pass_word, database='etoken')
     return new_conn
 
+def getVPNjson():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
 
+    jsons = []
+    for line in ssh.stdout:
+        period = line.split('.')
+        first = [period[0] +'.'+ period[1]+'.' + period[2]+ '.' + period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+        json = {}
+        try:
+            json['name'] = "vpn113019"
+            json['date'] = stripped[0][0:6].strip()
+            json['service_version'] = stripped[0][23:36].strip()
+            json['id'] = stripped[1][11:].strip()
+            json['time'] = stripped[0][7:15].strip()
+            json['service'] = stripped[0][16:21].strip()
+            json['category']= stripped[0][46:].strip()
+            json['ip'] = stripped[2][5:].strip()
+            json['session_type'] = stripped[4][14:].strip()
+            json['duration'] = stripped[5][10:].strip()
+            json['bytes_xmt'] = stripped[6][11:].strip()
+            json['bytes_rcv'] = stripped[7][11:].strip()
+            json['reason'] = stripped[8][8:].strip()
+            jsons.append(json)
+        except IndexError:
+            print('special case')
+            print(stripped)
+    return jsons
+def getCiscojson():
+    ssh = subprocess.Popen(["grep", "722055", "/var/log/cisco"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize = 0)
+    jsons = []
+    for line in ssh.stdout:
+        json = {}
+        json['name'] = 'vpn722055'
+        json['date'] = line[:(line.find(":") -3)]
+        json['time'] = line[(line.find(":") -2): line.find(":") + 6]
+        json['service_version'] = line[line.find("%"): line.find("%") + 13] 
+        json['service'] = line[line.find("%")-7: line.find("%") - 3]
+        json['category'] = line[line.find("<") +1: line.find(">")]
+        json['id'] = line[line.find("User") + 6: line.find("IP") - 2]
+        json['ip'] = line[line.find("IP") + 4: line.find("Client Type") -3] 
+        json['client_type'] = line[line.find("Client Type") + 13: -1]
+        jsons.append(json)
+    return jsons   
 def showSQLAttribute(username, pass_word):
     conn = getSQLConnection(username, pass_word)
     cursor = conn.cursor()
@@ -33,6 +81,15 @@ def showSQLAttribute(username, pass_word):
     conn.close()
     return i
 
+def showTestPSQLAttribute(table, username):
+    conn = getTestConnection(username)
+    cursor = conn.cursor()
+    cursor.execute("SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{}';".format(table))
+    list = []
+    for i in cursor.fetchall():
+        list.append(i[0])
+    conn.close()
+    return list
 
 def showPSQLAttribute(table, username, password):
     conn = getConnection(username, password)
@@ -86,6 +143,38 @@ def searchInOneAttribute(username, pass_word, attribute, key_word):
     print(cursor.fetchall())
     conn.close()
 
+def showAllTestTablesODIN(print_boolean, username):
+    try:
+        conn = getTestConnection(username)
+        cursor = conn.cursor()
+        query = """Select a."Name" from (
+SELECT n.nspname as "Schema",
+  c.relname as "Name",
+  CASE c.relkind WHEN 'r' THEN 'table' WHEN 'v' THEN 'view' WHEN 'i' THEN 'index' WHEN 'S' THEN 'sequence' WHEN 's' THEN 'special' WHEN 'f' THEN 'foreign table' END as "Type",
+  pg_catalog.pg_get_userbyid(c.relowner) as "Owner"
+FROM pg_catalog.pg_class c
+     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+WHERE c.relkind IN ('r','v','S','f','')
+      AND n.nspname <> 'pg_catalog'
+      AND n.nspname <> 'information_schema'
+      AND n.nspname !~ '^pg_toast'
+  AND pg_catalog.pg_table_is_visible(c.oid)
+ORDER BY 1,2) a"""
+        cursor.execute(query)
+        table_lst = []
+        for row in cursor.fetchall():
+            if (print_boolean == True):
+                print(row[0])
+            else:
+                table_lst.append(row[0])
+    except (Exception, psycopg2.Error) as error:
+        print("Error while connecting to PostgreSQL", error)
+    finally:
+        if (conn):
+            cursor.close()
+            conn.close()
+            if (print_boolean == False):
+                return table_lst
 
 def showAllTablesODIN(print_boolean, username, password):
     try:
@@ -144,7 +233,20 @@ def addComment(table_name, comment, username, password):
             cursor.close()
             conn.close()
 
-
+def commitTestQuery(query, output, username):
+    try:
+        conn = getTestConnection(username)
+        cursor = conn.cursor()
+        cursor.execute("SELECT version();")
+        record = cursor.fetchone()
+        cursor.execute(query)
+        conn.commit()
+    except (Exception, psycopg2.Error) as error:
+        print("Error while connecting to PostgreSQL", error)
+    finally:
+        if (conn):
+            cursor.close()
+            conn.close()
 def commitQuery(query, output, username, password):
     """
     Prints out a successful statement if query worked. Else, print a error statement.
@@ -175,6 +277,9 @@ def commitQuery(query, output, username, password):
 Alter, add and remove, you don't want to update (change the data)
 """
 
+def createTestTable(table_name, var_dict, username):
+    commitTestQuery(createTableQuery(table_name, var_dict), "Table created successfully in PostgreSQL", username)
+    commitTestQuery("Alter table {} OWNER TO odin;".format(table_name), "Table created successfully in PostgreSQL", username)
 
 def createTable(table_name, var_dict, username, password):
     """
@@ -202,6 +307,9 @@ def insertTableJson(json, username, password):
     Inserts a json blobs that are to be added into the odin database.
     """
     commitQuery(insertTableJsonQuery(json), "Table inserted successfully in PostgreSQL", username, password)
+
+def insertTestTableJson(json, username):
+    commitTestQuery(insertTableJsonQuery(json), "Table inserted successfully in PostgreSQL", username)
 
 
 def insertTable(json, username, password):
@@ -245,6 +353,9 @@ def alterTable(table_name, column_name, column_type, username, password):
     commitQuery(alterTableQuery(table_name, column_name, column_type), "Table altered successfully in PostgreSQL",
                 username, password)
 
+def alterTestTable(table_name, column_name, column_type, username):
+    commitTestQuery(alterTableQuery(table_name, column_name, column_type), "Table altered successfully in PostgreSQL",
+                username)
 
 def updateTable(table_name, attr_dict, password, condition=None):
     """
@@ -393,7 +504,7 @@ def insertTableJsonQuery(json):
         table_name = json["name"]
         insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
         return insert_query
-    elif (json["name"].lower() == "etoken"):
+    elif (json["name"].lower() == "etoken") or ("vpn" in json["name"].lower()):
         columnNotDict = []
         valueNotDict = []
         for column_name in json:

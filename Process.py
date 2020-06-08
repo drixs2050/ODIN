@@ -85,8 +85,36 @@ def processing(username, password):
 		incoming_data.append(row[0])
 	conn.close()
 	return incoming_data
+def vpnProcessing(username):
+	conn = getTestConnection(username)
+	cursor = conn.cursor()
+	cursor.execute("SELECT payload from incoming;")
+	incoming_data = []
+	for row in cursor.fetchall():
+		incoming_data.append(row[0])
+	conn.close()
+	return incoming_data
 
-
+def vpnexecute(username):
+	incoming_data = vpnProcessing(username)
+	for data in incoming_data:
+		table_name = data['name']
+		current_tables = showAllTestTablesODIN(False, username)
+		if ('vpn' in table_name) and not (table_name in current_tables):
+			var_dict = {}
+			for column in data:
+				var_dict[column] = 'varchar'
+			createTestTable(table_name, var_dict, username)
+		
+		attribute_lst = showTestPSQLAttribute(table_name, username) 
+		for keys in data:
+			if keys not in attribute_lst and keys!= "stem_counts":
+				
+				alterTestTable(data['name'], keys, 'varchar', username)
+			
+		insertTestTableJson(data, username)
+		
+		
 def execute(username, password):
 	incoming_data = processing(username, password)
 	for data in incoming_data:
@@ -94,12 +122,13 @@ def execute(username, password):
 		current_tables = showAllTablesODIN(False, username, password)
 		if (table_name == 'grouper') and not (table_name in current_tables):
 			var_dict = {}
-			max_attribute_len = 0
+			"""max_attribute_len = 0
 			max_index = 0
 			#for i in range(len(incoming_data)):
 			#	if (len(incoming_data[i]) > max_attribute_len) and incoming_data[i]['name'].lower() == 'grouper':
 			#		max_attribute_len = len(incoming_data[i])
 			#		max_index = i
+			"""
 			for column in data:
 				if type(data[column]) == type({}):
 					var_dict['stemname'] = 'varchar'
@@ -107,7 +136,6 @@ def execute(username, password):
 				else:
 					if column != "stem_counts":
 						var_dict[column] = 'varchar'
-			print(var_dict)
 			createTable(table_name, var_dict, username, password)
 		if (table_name == 'etoken') and not (table_name in current_tables):
 			var_dict = {}
@@ -117,7 +145,13 @@ def execute(username, password):
 				else:
 					var_dict[column] = 'varchar'
 			createTable(table_name, var_dict, username, password)
-			
+		#if (table_name == 'vpn') and not (table_name in current_tables):
+		#	if data['Service_version'] == "%ASA-4-113019":
+		#		var_dict = {}
+		#		for column in data:
+		#			var_dict[column] = 'varchar'
+		#	
+		#	createTestTable(table_name, var_dict, username)				
 		attribute_lst = showPSQLAttribute(table_name, username, password)
 		for keys in data:
 			if keys not in attribute_lst and keys != "stem_counts":
@@ -132,6 +166,19 @@ def execute(username, password):
 	if (incoming_data != []):
 		archive(username, password)
 
+def vpnJsonify(username, vpntype):
+	if (vpntype == "vpn"):
+		vpnlst = getVPNjson()
+	elif (vpntype == "cisco"):
+		vpnlst = getCiscojson()
+	conn = psycopg2.connect(user = username, dbname ="odin")
+	cursor = conn.cursor()
+	for blob in vpnlst:
+		if type(blob) != type([]):
+			cursor.execute("INSERT INTO incoming (payload) VALUES ('%s')" % json.dumps(blob, indent=4))
+	conn.commit()
+
+	
 def etokenJsonify(username, pa):
 	payload = {}
 	payload['name'] = 'etoken'
@@ -162,6 +209,7 @@ def etokenJsonify(username, pa):
 
 	
 if __name__ == "__main__":
+
 	if (len(sys.argv) == 3):
 		processing(sys.argv[1], sys.argv[2])
 		etokenJsonify(sys.argv[1], sys.argv[2])
@@ -174,5 +222,7 @@ if __name__ == "__main__":
 			moveData(sys.argv[1], 'archive', sys.argv[2])
 			dropTable('grouper', sys.argv[1], sys.argv[2])
 			dropTable('etoken', sys.argv[1], sys.argv[2])
-
+		
+	#vpnJsonify(sys.argv[1], "vpn")
+	#vpnexecute(sys.argv[1])
 
