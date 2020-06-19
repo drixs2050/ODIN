@@ -19,10 +19,10 @@ for line in ssh.stdout:
             stats['group'][list[1].split('>')[0].strip()] = 1
         else:
             stats['group'][list[1].split('>')[0].strip()] += 1
-        if list[3].split(':')[1].strip() not in stats['service type']:
-            stats['service type'][list[3].split(':')[1].strip()] = 1
+        if ''.join(list[3].split(':')[1].strip().split()[:-1]) not in stats['service type']:
+            stats['service type'][''.join(list[3].split(':')[1].strip().split()[:-1])] = 1
         else:
-            stats['service type'][list[3].split(':')[1].strip()] += 1
+            stats['service type'][''.join(list[3].split(':')[1].strip().split()[:-1])] += 1
         #json['Date'] = first[0].strip() + ' '+first[1].strip()
         #json['Time'] = first[2].strip()
         #json['Port'] = first[3].strip()
