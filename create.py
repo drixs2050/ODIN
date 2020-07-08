@@ -3,7 +3,8 @@ import psycopg2
 import datetime
 import csv
 import subprocess
-inventory_on_20200510 = 132
+from psycopg2 import OperationalError, errorcodes
+inventory_on_20200510 = 157
 baseline_date = datetime.date(2020, 5, 10)
 
 def getConnection(username, password):
@@ -37,7 +38,7 @@ def getVPNjson():
             json['name'] = "vpn113019"
             json['date'] = stripped[0][0:6].strip()
             json['service_version'] = stripped[0][23:36].strip()
-            json['id'] = stripped[1][11:].strip()
+            json['utorid'] = stripped[1][11:].strip()
             json['time'] = stripped[0][7:15].strip()
             json['service'] = stripped[0][16:21].strip()
             json['category']= stripped[0][46:].strip()
@@ -56,18 +57,446 @@ def getCiscojson():
     ssh = subprocess.Popen(["grep", "722055", "/var/log/cisco"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize = 0)
     jsons = []
     for line in ssh.stdout:
+        list = line.split('<')
         json = {}
-        json['name'] = 'vpn722055'
-        json['date'] = line[:(line.find(":") -3)]
-        json['time'] = line[(line.find(":") -2): line.find(":") + 6]
-        json['service_version'] = line[line.find("%"): line.find("%") + 13] 
-        json['service'] = line[line.find("%")-7: line.find("%") - 3]
-        json['category'] = line[line.find("<") +1: line.find(">")]
-        json['id'] = line[line.find("User") + 6: line.find("IP") - 2]
-        json['ip'] = line[line.find("IP") + 4: line.find("Client Type") -3] 
-        json['client_type'] = line[line.find("Client Type") + 13: -1]
-        jsons.append(json)
-    return jsons   
+        try:
+            first = list[0].split(' ')
+            json['name'] = "vpn722055"
+            json['date'] = first[0].strip() + ' '+first[1].strip()
+            json['time'] = first[2].strip()
+            json['port'] = first[3].strip()
+            json['service_version'] = list[0].split(':')[3].strip()
+            json['category'] = list[1].split('>')[0].strip()
+            json['utorid'] = list[2].split('>')[0].strip()
+            json['ip'] = list[3].split('>')[0].strip()
+            json['service_type'] = list[3].split(':')[1].strip()
+            jsons.append(json)
+        except IndexError:
+            print('special case')
+
+    return jsons
+def getClientSummary():
+    ssh = subprocess.Popen(["grep", "722055", "/var/log/cisco"], stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+    stats = {}
+    stats['name'] = 'vpnclient_summary'
+    stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+    stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    stats['total_connection'] = 0
+    stats['service_type'] = {}
+    for line in ssh.stdout:
+        list = line.split('<')
+        first = list[0].split(' ')
+        try:
+            stats['total_connection'] += 1
+            if ''.join(list[3].split(':')[1].strip().split()[:-1]) not in stats['service_type']:
+                stats['service_type'][''.join(list[3].split(':')[1].strip().split()[:-1])] = 1
+            else:
+                stats['service_type'][''.join(list[3].split(':')[1].strip().split()[:-1])] += 1
+        except IndexError:
+            continue                                                                                                   
+    return stats
+
+def getDisconnectionFlagsUserRequested():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize = 0)
+    jsons = []
+    for line in ssh.stdout:
+        stats = {}
+        stats['name'] = 'vpnflag_user_requested'
+        stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+        stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        period = line.split('.')
+        first = [period[0] + '.' + period[1] + '.' + period[2] + '.' +  period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+        
+        try:
+            if (stripped[8][8:].strip() == "User Requested"):
+                user = stripped[1][stripped[1].find("=")+2:]
+                stats['utorid'] = user
+                flags = subprocess.Popen(["/opt/local/bin/getuserinfo", "--utorid={}".format(user)], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+                for line in flags.stdout:
+                    if "isstaff:" in line:
+                        stats['isstaff'] = line[line.find(":")+1: ].strip()
+                    if "isstudent:" in line:
+                        stats['isstudent'] = line[line.find(":")+1:].strip()
+                    if "isfaculty:" in line:
+                        stats['isfaculty'] = line[line.find(":")+1:].strip()
+                jsons.append(stats)
+        except (IndexError, ValueError):
+            continue
+    return jsons
+
+def getDisconnectionFlagsIdleTimeout():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize = 0)
+    jsons = []
+    for line in ssh.stdout:
+        stats = {}
+        stats['name'] = 'vpnflag_idle_timeout'
+        stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+        stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        period = line.split('.')
+        first = [period[0] + '.' + period[1] + '.' + period[2] + '.' +  period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+
+        try:
+            if (stripped[8][8:].strip() == "Idle Timeout"):
+                user = stripped[1][stripped[1].find("=")+2:]
+                stats['utorid'] = user
+                flags = subprocess.Popen(["/opt/local/bin/getuserinfo", "--utorid={}".format(user)], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+                for line in flags.stdout:
+                    if "isstaff:" in line:
+                        stats['isstaff'] = line[line.find(":")+1: ].strip()
+                    if "isstudent:" in line:
+                        stats['isstudent'] = line[line.find(":")+1:].strip()
+                    if "isfaculty:" in line:
+                        stats['isfaculty'] = line[line.find(":")+1:].strip()
+                jsons.append(stats)
+        except (IndexError, ValueError):
+            continue
+    return jsons
+
+def getDisconnectionFlagsConnectionPreempted():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize = 0)
+    jsons = []
+    for line in ssh.stdout:
+        stats = {}
+        stats['name'] = 'vpnflag_connection_preempted'
+        stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+        stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        period = line.split('.')
+        first = [period[0] + '.' + period[1] + '.' + period[2] + '.' +  period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+
+        try:
+            if (stripped[8][8:].strip() == "Connection Preempted"):
+                user = stripped[1][stripped[1].find("=")+2:]
+                stats['utorid'] = user
+                flags = subprocess.Popen(["/opt/local/bin/getuserinfo", "--utorid={}".format(user)], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+                for line in flags.stdout:
+                    if "isstaff:" in line:
+                        stats['isstaff'] = line[line.find(":")+1: ].strip()
+                    if "isstudent:" in line:
+                        stats['isstudent'] = line[line.find(":")+1:].strip()
+                    if "isfaculty:" in line:
+                        stats['isfaculty'] = line[line.find(":")+1:].strip()
+                jsons.append(stats)
+        except (IndexError, ValueError):
+            continue
+    return jsons
+
+def getDisconnectionFlagsCertificateExpired():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize = 0)
+    jsons = []
+    for line in ssh.stdout:
+        stats = {}
+        stats['name'] = 'vpnflag_certificate_expired'
+        stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+        stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        period = line.split('.')
+        first = [period[0] + '.' + period[1] + '.' + period[2] + '.' +  period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+
+        try:
+            if (stripped[8][8:].strip() == "Certificate Expired"):
+                user = stripped[1][stripped[1].find("=")+2:]
+                stats['utorid'] = user
+                flags = subprocess.Popen(["/opt/local/bin/getuserinfo", "--utorid={}".format(user)], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+                for line in flags.stdout:
+                    if "isstaff:" in line:
+                        stats['isstaff'] = line[line.find(":")+1: ].strip()
+                    if "isstudent:" in line:
+                        stats['isstudent'] = line[line.find(":")+1:].strip()
+                    if "isfaculty:" in line:
+                        stats['isfaculty'] = line[line.find(":")+1:].strip()
+                jsons.append(stats)
+        except (IndexError, ValueError):
+            continue
+    return jsons
+                 
+def getDisconnectionReason():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+    stats = {}
+    stats['name'] = 'vpndisconnection'
+    stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+    stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    #stats['total_bytes_xmt'] = 0
+    #stats['total_bytes_rcv'] = 0
+    #stats['total_duration'] = 0
+    #stats['total_connection'] = 0
+    stats['disconnection_reasons'] = {}
+    stats['groups'] = {}
+    #stats['session_types'] = {}
+    for line in ssh.stdout:
+        period = line.split('.')
+        first = [period[0] +'.'+ period[1]+'.' + period[2]+ '.' + period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+        try:
+            #stats['total_bytes_xmt'] += int(stripped[6][11:].strip())
+            #stats['total_bytes_rcv'] += int(stripped[7][11:].strip())
+            #stats['total_connection'] += 1
+            if stripped[8][8:].strip() not in stats['disconnection_reasons']:
+                stats['disconnection_reasons'][stripped[8][8:].strip()] = 1
+            else:
+                stats['disconnection_reasons'][stripped[8][8:].strip()] += 1
+            #if stripped[4][14:].strip() not in stats['session_types']:
+            #    stats['session_types'][stripped[4][14:].strip()] = 1
+            #else:
+            #    stats['session_types'][stripped[4][14:].strip()] += 1
+            if stripped[0][46:].strip() not in stats['groups']:
+                stats['groups'][stripped[0][46:].strip()] = 1
+            else:
+                stats['groups'][stripped[0][46:].strip()] += 1
+            #reversed = stripped[5][10:].strip()[::-1]
+            #seconds = int(reversed[1:3][::-1].strip())
+            #minutes = int(reversed[5:7][::-1].strip())
+            #rest = reversed[9:].strip()
+            #days = 0
+            #if 'd' not in rest:
+            #    hours = int(rest)
+            #else:
+            #    hours = int(rest.split('d')[0].strip()[::-1])
+            #    days = int(rest.split('d')[1].strip()[::-1])
+            #stats['total_duration'] += (seconds + minutes * 60 + hours * 3600 + days * 86400)
+        except (IndexError, ValueError):
+            #print('special case')
+            #print(stripped)
+            continue
+    #stats['total_duration'] = convert(stats['total_duration'])
+    return stats
+def convert(n):
+    return str(datetime.timedelta(seconds = n))
+def getByteTransfer():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+    stats = {}
+    stats['name'] = 'vpn_data_traffic'
+    stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+    stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    stats['total_bytes_xmt'] = 0
+    stats['total_bytes_rcv'] = 0
+    stats['total_duration'] = 0
+    stats['total_connection'] = 0
+    for line in ssh.stdout:
+        period = line.split('.')
+        first = [period[0] +'.'+ period[1]+'.' + period[2]+ '.' + period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+        try:
+            stats['total_bytes_xmt'] += int(stripped[6][11:].strip())
+            stats['total_bytes_rcv'] += int(stripped[7][11:].strip())
+            stats['total_connection'] += 1
+            reversed = stripped[5][10:].strip()[::-1]
+            seconds = int(reversed[1:3][::-1].strip())
+            minutes = int(reversed[5:7][::-1].strip())
+            rest = reversed[9:].strip()
+            days = 0
+            if 'd' not in rest:
+                hours = int(rest)
+            else:
+                hours = int(rest.split('d')[0].strip()[::-1])
+                days = int(rest.split('d')[1].strip()[::-1])
+            stats['total_duration'] += (seconds + minutes * 60 + hours * 3600 + days * 86400)
+        except (IndexError, ValueError):
+            #print('special case')
+            #print(stripped)
+            continue
+    stats['total_duration'] = convert(stats['total_duration'])
+    return stats
+     
+def getUniqueUsers():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+    stats = {}
+    stats['name'] = 'vpnUniqueUser'
+    stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+    stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    stats['unique_user'] = 0
+    userlst = []
+    for line in ssh.stdout:
+        period = line.split('.')
+        first = [period[0] +'.'+ period[1]+'.' + period[2]+ '.' + period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+        try:
+            if "Username" in stripped[1]:
+                user = stripped[1][11:].strip()
+                if (user not in userlst or user == '025sql04'):
+                    userlst.append(user)
+        except (IndexError, ValueError):
+            continue
+    stats['unique_user'] = len(userlst)
+    return stats
+def getLocation(username, password, ip_address):
+    conn = getConnection(username, password)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM geoip WHERE network >> '{}'".format(ip_address))
+    location = {}
+    for i in cursor.fetchall():
+         location['city'] = i[22]
+         location['province'] = i[19]
+         location['country'] = i[17]
+    return location
+def getcountryLocation(username, password, ip_address):
+    conn = getConnection(username, password)
+    cursor = conn.cursor()
+    cursor.execute("SELECT country_name FROM geoip WHERE network >> '{}'".format(ip_address))
+    for i in cursor.fetchall():
+        return i[0]
+
+def getprovinceLocation(username, password, ip_address):
+    conn = getConnection(username, password)
+    cursor = conn.cursor()
+    cursor.execute("SELECT subdivision_1_name FROM geoip WHERE network >> '{}'".format(ip_address))
+    for i in cursor.fetchall():
+        return i[0] 
+def getGeoLocation(username, password):
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+    jsons = []
+    for line in ssh.stdout:
+        stats = {}
+        stats['name'] = 'vpngeolocation'
+        stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+        stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+        period = line.split('.')
+        first = [period[0] + '.' + period[1] + '.' + period[2] + '.' + period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+        try:
+            user = stripped[1][11:].strip()
+            ip_address = stripped[2][5:].strip()
+            stats['utorid'] = user
+            if (ip_address != ''):
+                location = getLocation(username, password,ip_address)
+                if location['city'].find("'") != -1:
+                    city = location['city'].replace("'", "''")
+                else:
+                    stats['city'] = location['city']
+                stats['country']= location['country']
+                stats['province'] = location['province']
+                jsons.append(stats)
+
+            
+        except (IndexError, ValueError, psycopg2.DataError, KeyError, AttributeError):
+            continue
+        
+    return jsons
+       
+def checkSameDate15MinBlock(username,password):
+    current_tables = showAllTablesODIN(False, username, password)
+    if ('vpn15minblock_flags' in current_tables):
+        conn = getConnection(username, password)
+        cursor = conn.cursor()
+        cursor.execute("SELECT count (*) from vpn15minblock_flags where run_date = '{}'".format(datetime.datetime.now().strftime("%Y-%m-%d")))
+        for row in cursor.fetchall():
+            return row[0]
+        
+    
+def get15minblockflags(username, password):
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+    jsons = []
+    count = checkSameDate15MinBlock(username, password) 
+    if count == 0 or count == None:
+        for line in ssh.stdout:
+            stats = {}
+            stats['name'] = 'vpn15minblock_flags'
+            stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+            stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3] 
+            period = line.split('.')
+            first = [period[0] + '.' + period[1] + '.' + period[2] + '.' + period[3], period[4]]
+            second = first[0].split(',') + first[1].split(',')
+            stripped = [i.strip() for i in second]
+            try:
+                user = stripped[1][11:].strip()
+                ip_address = stripped[2][5:].strip()
+                stats['utorid'] = user
+                stats['bytes_xmt'] = stripped[6][10:].strip()
+                stats['bytes_rcv'] = stripped[7][10:].strip()
+                flags = subprocess.Popen(["/opt/local/bin/getuserinfo", "--utorid={}".format(user)], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+                for line in flags.stdout:
+                    if "isstaff:" in line:
+                        stats['isstaff'] = line[line.find(":")+1: ].strip()
+                    if "isstudent:" in line:
+                        stats['isstudent'] = line[line.find(":")+1:].strip()
+                    if "isfaculty:" in line:
+                        stats['isfaculty'] = line[line.find(":")+1:].strip()
+                if ip_address != '':
+                    location = getLocation(username, password, ip_address)
+                    if location['city'].find("'") != -1:
+                        stats['city'] = location['city'].replace("'", "''")
+                    else:
+                        stats['city'] = location['city']
+                    stats['country'] = location['country']
+                    stats['province'] = location['province']
+                    jsons.append(stats)
+            except (IndexError, ValueError, psycopg2.DataError, KeyError, AttributeError):
+                continue
+    else:
+         i = 0
+         for line in ssh.stdout:
+             i += 1
+             if i > count:
+                stats = {}
+                stats['name'] = 'vpn15minblock_flags'
+                stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+                stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+                period = line.split('.')
+                first = [period[0] + '.' + period[1] + '.' + period[2] + '.' + period[3], period[4]]
+                second = first[0].split(',') + first[1].split(',')
+                stripped = [i.strip() for i in second]
+                try:
+                    user = stripped[1][11:].strip()
+                    ip_address = stripped[2][5:].strip()
+                    stats['utorid'] = user
+                    stats['bytes_xmt'] = stripped[6][10:].strip()
+                    stats['bytes_rcv'] = stripped[7][10:].strip()
+                    flags = subprocess.Popen(["/opt/local/bin/getuserinfo", "--utorid={}".format(user)], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+                    for line in flags.stdout:
+                        if "isstaff:" in line:
+                            stats['isstaff'] = line[line.find(":")+1: ].strip()
+                        if "isstudent:" in line:
+                            stats['isstudent'] = line[line.find(":")+1:].strip()
+                        if "isfaculty:" in line:
+                            stats['isfaculty'] = line[line.find(":")+1:].strip()
+                    if ip_address != '':
+                        location = getLocation(username, password, ip_address)
+                        if location['city'].find("'") != -1:
+                            stats['city'] = location['city'].replace("'", "''")
+                        else:
+                            stats['city'] = location['city']
+                        stats['country'] = location['country']
+                        stats['province'] = location['province']
+                        jsons.append(stats)
+                except (IndexError, ValueError, psycopg2.DataError, KeyError, AttributeError):
+                    continue
+    return jsons 
+def get15minblock():
+    ssh = subprocess.Popen(["grep", "113019", "/var/log/cisco"], stdin = subprocess.PIPE, stdout= subprocess.PIPE, stderr = subprocess.PIPE, universal_newlines=True, bufsize =0)
+    stats = {}
+    stats['name'] = 'vpn15minblock'
+    stats['run_date'] = datetime.datetime.now().strftime("%Y-%m-%d")
+    stats['run_time'] = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    stats['user_count'] = 0
+    stats['total_bytes_xmt'] = 0
+    stats['total_bytes_rcv'] = 0
+    userlst = []
+    for line in ssh.stdout:
+        period = line.split('.')
+        first = [period[0] + '.' + period[1] + '.' + period[2] + '.' + period[3], period[4]]
+        second = first[0].split(',') + first[1].split(',')
+        stripped = [i.strip() for i in second]
+        try:
+            stats['total_bytes_xmt'] += int(stripped[6][11:].strip())
+            stats['total_bytes_rcv'] += int(stripped[7][11:].strip())
+            if "Username" in stripped[1]:
+                user = stripped[1][11:].strip()
+                userlst.append(user)
+        except (IndexError, ValueError):
+            continue
+    stats['user_count'] = len(userlst)
+    return stats
+ 
 def showSQLAttribute(username, pass_word):
     conn = getSQLConnection(username, pass_word)
     cursor = conn.cursor()
@@ -508,9 +937,27 @@ def insertTableJsonQuery(json):
         columnNotDict = []
         valueNotDict = []
         for column_name in json:
-            if (column_name not in columnNotDict):
+            if (column_name not in columnNotDict and type(json[column_name]) != dict):
                 columnNotDict.append(column_name)
-            valueNotDict.append(json[column_name])
+                if type(json[column_name]) == str and json[column_name].find("'") != -1:
+                    changed_value = (json[column_name].replace("'", ""))
+                    valueNotDict.append(changed_value)
+                else:
+                    if json[column_name] == None: 
+                        changed_value = 'None'
+                        valueNotDict.append(changed_value)
+                    else:
+                        valueNotDict.append(json[column_name])
+            if (column_name not in columnNotDict and type(json[column_name]) == dict):
+                for attribute in json[column_name]:
+                    if attribute not in columnNotDict:
+                        attribute_copy = '"' + attribute + '"'
+                        columnNotDict.append(attribute_copy)
+                        if json[column_name][attribute].find("'") != -1:
+                            changed_value = (json[column_name][attribute].replace("'", ""))
+                            valueNotDict.append(changed_value)
+                        else: 
+                            valueNotDict.append(json[column_name][attribute])
         value = value +str(tuple(valueNotDict)) + ','
         column = str(tuple(columnNotDict))
         column = column.replace("'", "")
@@ -658,7 +1105,7 @@ def getInventory(username, pass_word):
     curr_inventory = inventory_on_20200510
     for i in cursor.fetchall()[::-1]:
         if i[0] >= baseline_date:
-            curr_inventory += 300
+            curr_inventory += i[2]
         if i[0] < baseline_date:
             break
     cursor.execute("select * from orderhistory;")
@@ -690,3 +1137,4 @@ def json2csv(username, password):
                 writer.writerow(json)
     except IOError:
         print("I/O error")
+
