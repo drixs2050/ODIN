@@ -1,12 +1,20 @@
 import csv
-
 with open('duo-logs.csv', mode='r') as infile:
     reader = csv.reader(infile)
     with open('duo-logs-new.csv', mode='w') as outfile:
         writer = csv.writer(outfile)
-        duo_log_dict = {rows[0]:rows[1] for rows in reader}
+        duo_log_dict = {}
+        duo_log_stats = {}
+        for rows in reader:
+            duo_log_dict[rows[0]] = rows[1]
+            if rows[1] in duo_log_stats:
+                duo_log_stats[rows[1]] += 1
+            else:
+                duo_log_stats[rows[1]] = 1
+
 
 print(duo_log_dict)
+print(duo_log_stats)
 
 with open('divisions.csv', mode='r') as infile:
     reader1 = csv.reader(infile)
