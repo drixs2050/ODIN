@@ -156,13 +156,15 @@ def execute(username, password):
 		for keys in data:
 			if keys not in attribute_lst and keys != "stem_counts":
 				alterTable(data['name'], keys, 'varchar', username, password)
-		"""conn = getConnection(username, pa)
+		conn = getConnection(username, password)
 		cursor = conn.cursor()
 		cursor.execute("SELECT run_date FROM etoken;")
 		checker = False
 		for row in cursor.fetchall():
-			row[0] == datetime.datetime.now().strftime("%Y-%m-%d") """
-		insertTableJson(data, username, password)
+			if row[0] == datetime.datetime.now().strftime("%Y-%m-%d"):
+				checker = True
+		if (checker == False): 
+			insertTableJson(data, username, password)
 	if (incoming_data != []):
 		archive(username, password)
 
@@ -171,13 +173,14 @@ def vpnJsonify(username, vpntype):
 		vpnlst = getVPNjson()
 	elif (vpntype == "cisco"):
 		vpnlst = getCiscojson()
+	
 	conn = psycopg2.connect(user = username, dbname ="odin")
 	cursor = conn.cursor()
 	for blob in vpnlst:
 		if type(blob) != type([]):
 			cursor.execute("INSERT INTO incoming (payload) VALUES ('%s')" % json.dumps(blob, indent=4))
 	conn.commit()
-
+	
 	
 def etokenJsonify(username, pa):
 	payload = {}
@@ -209,20 +212,21 @@ def etokenJsonify(username, pa):
 
 	
 if __name__ == "__main__":
-
+		
 	if (len(sys.argv) == 3):
-		processing(sys.argv[1], sys.argv[2])
+		#processing(sys.argv[1], sys.argv[2])
 		etokenJsonify(sys.argv[1], sys.argv[2])
+		moveData(sys.argv[1], 'incoming', sys.argv[2])
 		#json2csv(sys.argv[1])
-		execute(sys.argv[1], sys.argv[2])
-		createIncomingTrigger(sys.argv[1], sys.argv[2])
-		createArchiveTrigger(sys.argv[1], sys.argv[2])
+		#execute(sys.argv[1], sys.argv[2])
+		#createIncomingTrigger(sys.argv[1], sys.argv[2])
+		#createArchiveTrigger(sys.argv[1], sys.argv[2])
 	if (len(sys.argv) > 3):
 		if ((sys.argv[3]) == 'restore'):
 			moveData(sys.argv[1], 'archive', sys.argv[2])
 			dropTable('grouper', sys.argv[1], sys.argv[2])
 			dropTable('etoken', sys.argv[1], sys.argv[2])
 		
-	#vpnJsonify(sys.argv[1], "vpn")
+	#vpnJsonify(sys.argv[1], "cisco")
 	#vpnexecute(sys.argv[1])
 

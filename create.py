@@ -337,6 +337,8 @@ def getLocation(username, password, ip_address):
          location['city'] = i[22]
          location['province'] = i[19]
          location['country'] = i[17]
+         location['latitude'] = '{}'.format(i[7])
+         location['longitude'] = '{}'.format(i[8])
     return location
 def getcountryLocation(username, password, ip_address):
     conn = getConnection(username, password)
@@ -429,8 +431,11 @@ def get15minblockflags(username, password):
                         stats['city'] = location['city']
                     stats['country'] = location['country']
                     stats['province'] = location['province']
+                    stats['latitude'] = location['latitude']
+                    stats['longitude'] = location['longitude']
                     jsons.append(stats)
             except (IndexError, ValueError, psycopg2.DataError, KeyError, AttributeError):
+                print(ip_address)
                 continue
     else:
          i = 0
@@ -467,8 +472,11 @@ def get15minblockflags(username, password):
                             stats['city'] = location['city']
                         stats['country'] = location['country']
                         stats['province'] = location['province']
+                        stats['latitude'] = location['latitude']
+                        stats['longitude'] = location['longitude']
                         jsons.append(stats)
                 except (IndexError, ValueError, psycopg2.DataError, KeyError, AttributeError):
+                    print(ip_address)
                     continue
     return jsons 
 def get15minblock():
@@ -933,7 +941,7 @@ def insertTableJsonQuery(json):
         table_name = json["name"]
         insert_query = "INSERT INTO {} {} VALUES {};".format(table_name, column, value)
         return insert_query
-    elif (json["name"].lower() == "etoken") or ("vpn" in json["name"].lower()):
+    else:
         columnNotDict = []
         valueNotDict = []
         for column_name in json:

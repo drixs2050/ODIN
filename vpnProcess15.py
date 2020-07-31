@@ -56,16 +56,17 @@ def vpnJsonify(username, password, vpntype):
             conn = getConnection(username, password)
             cursor = conn.cursor()
             for blob in vpnlst:
-                if type(blob) != type([]):
+                if type(blob) != type([]): 
                     cursor.execute("INSERT INTO incoming (payload) VALUES ('%s')" % json.dumps (blob, indent=4))
             conn.commit()
 if __name__ == "__main__":
     if (len(sys.argv) == 3):
-        vpnJsonify(sys.argv[1], sys.argv[2], "15minblock")
         vpnJsonify(sys.argv[1], sys.argv[2], "15minblockflags")
-        vpnexecute(sys.argv[1], sys.argv[2])
-        createIncomingTrigger(sys.argv[1], sys.argv[2])
-        createArchiveTrigger(sys.argv[1], sys.argv[2])
+        vpnJsonify(sys.argv[1], sys.argv[2], "15minblock")
+        moveData(sys.argv[1], 'incoming', sys.argv[2])
+        #vpnexecute(sys.argv[1], sys.argv[2])
+        #createIncomingTrigger(sys.argv[1], sys.argv[2])
+        #createArchiveTrigger(sys.argv[1], sys.argv[2])
     if (len(sys.argv) > 3):
         if ((sys.argv[3]) == 'restore'):
                 moveData(sys.argv[1], 'archive', sys.argv[2])

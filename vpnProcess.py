@@ -148,7 +148,7 @@ def vpnJsonify(username, password, vpntype):
         """
 if __name__ == "__main__":
     if (len(sys.argv) == 3):
-        #vpnJsonify(sys.argv[1], sys.argv[2], "getGeoLocation")
+        #getLocation(sys.argv[1], sys.argv[2], '142.1.170.75')
         vpnJsonify(sys.argv[1], sys.argv[2], "uniqueuser")
         vpnJsonify(sys.argv[1], sys.argv[2], "disconnectionUserRequested")
         vpnJsonify(sys.argv[1], sys.argv[2], "disconnectionIdleTimeout")
@@ -156,9 +156,10 @@ if __name__ == "__main__":
         vpnJsonify(sys.argv[1], sys.argv[2], "disconnectionConnectionPreempted")
         vpnJsonify(sys.argv[1], sys.argv[2], "vpn")
         vpnJsonify(sys.argv[1], sys.argv[2], "cisco")
-        vpnexecute(sys.argv[1], sys.argv[2]) 
-        createIncomingTrigger(sys.argv[1], sys.argv[2])
-        createArchiveTrigger(sys.argv[1], sys.argv[2])
+        moveData(sys.argv[1], 'incoming', sys.argv[2])
+        #vpnexecute(sys.argv[1], sys.argv[2]) 
+        #createIncomingTrigger(sys.argv[1], sys.argv[2])
+        #createArchiveTrigger(sys.argv[1], sys.argv[2])
     if (len(sys.argv) > 3):
         if ((sys.argv[3]) == 'restore'):
                 moveData(sys.argv[1], 'archive', sys.argv[2])
